@@ -1,0 +1,24 @@
+title: Appointment Checkout Request
+type: object
+description: Appointment Checkout Request model
+properties:
+  date:
+    type: string
+    description: specific date
+    example: "2021-12-25"
+    pattern: yyyy-mm-dd
+  time:
+    type: string
+    description: specific time
+    example: "10:00-14:00"
+    enum:
+      - "07:00-10:00"
+      - "10:00-14:00"
+      - "14:00-18:00"
+  description:
+    type: string
+    description: special note to the mechanics
+    example: be on time
+required:
+  - date
+  - time

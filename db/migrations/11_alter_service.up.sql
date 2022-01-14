@@ -1,0 +1,2 @@
+ALTER TABLE "services" 
+    ALTER COLUMN "picture" TYPE VARCHAR(256);

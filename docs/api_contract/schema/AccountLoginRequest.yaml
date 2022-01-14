@@ -1,0 +1,19 @@
+title: Account Login Request
+type: object
+description: Login request Model
+properties:
+  email:
+    type: string
+    description: unique email
+    example: user@gmail.com
+    minLength: 1
+    maxLength: 128
+  password:
+    type: string
+    description: account password
+    example: abc123D4
+    minLength: 8
+    maxLength: 60
+required:
+  - email
+  - password

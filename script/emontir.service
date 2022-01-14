@@ -1,0 +1,14 @@
+[Unit]
+Description=emontir Go Server
+ConditionFileIsExecutable=/opt/emontir/server
+StartLimitIntervalSec=5
+StartLimitBurst=10
+
+[Service]
+ExecStart=/opt/emontir/server
+WorkingDirectory=/opt/emontir
+RestartSec=120
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target

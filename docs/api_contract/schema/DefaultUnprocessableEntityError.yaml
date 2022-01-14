@@ -1,0 +1,27 @@
+title: Default Unprocessable Entity Error Response
+type: object
+description: Default validation error response
+properties:
+  message:
+    type: string
+    example: validation-failed
+    description: unprocessable entity message
+  fields:
+    type: array
+    items:
+      type: object
+      properties:
+        name:
+          type: string
+          example: password
+          description: field name
+        message:
+          type: string
+          example: password must include special character
+          description: error message
+      required:
+        - name
+        - message
+required:
+  - message
+  - fields

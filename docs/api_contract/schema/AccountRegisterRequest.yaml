@@ -1,0 +1,27 @@
+title: Account Register Request
+type: object
+description: Register request model
+properties:
+  name:
+    type: string
+    description: user name
+    example: raja moris
+    maxLength: 128
+    minLength: 1
+  email:
+    type: string
+    description: unique email
+    example: user@gmail.com
+    maxLength: 128
+    minLength: 1
+  password:
+    type: string
+    description: account password
+    example: abc123D4.
+    minLength: 8
+    maxLength: 60
+    pattern: '^[A-Za-z0-9 -_]+'
+required:
+  - name
+  - email
+  - password

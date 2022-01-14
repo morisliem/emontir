@@ -1,0 +1,10 @@
+title: Default Success Response
+type: object
+description: Default success response
+properties:
+  success:
+    type: boolean
+    example: true
+    description: Success message from server
+required:
+  - success

@@ -1,0 +1,16 @@
+title: Review service request
+type: object
+description: review service request model
+properties:
+  rating:
+    type: number
+    description: rating for the service
+    example: 4.9
+  feedback:
+    type: string
+    description: user feedback about the service
+    example: best ganti lampu depan ever
+    maxLength: 300
+    minLength: 10
+required:
+  - rating

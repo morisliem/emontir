@@ -1,0 +1,10 @@
+title: Add Item To Checkout
+type: object
+description: Add item to checkout model
+properties:
+  service_id:
+    type: string
+    description: unique service id
+    example: 1
+required:
+  - service_id

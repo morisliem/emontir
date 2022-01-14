@@ -1,0 +1,53 @@
+title: List Service Response
+type: object
+description: List service response model
+properties:
+  data:
+    type: array
+    description: List of services sorted by the highest rating
+    items:
+      type: object
+      properties:
+        id:
+          type: string
+          description: service id
+          example: 1
+        title:
+          type: string
+          description: service title
+          example: ganti oli
+        description:
+          type: string
+          description: service description
+          example: 5 menit selesai
+        rating:
+          type: number
+          description: service rating
+          example: 4.9
+        price:
+          type: number
+          description: service price
+          example: 20000
+        picture:
+          type: string
+          description: service picture
+          example: title.png
+      required:
+        - id
+        - title
+        - description
+        - rating
+        - price
+        - picture
+  pagination:
+    type: object
+    required:
+      - next_page
+    properties:
+      next_page:
+        type: number
+        description: will return to 0 if the page hit the last page
+        example: 2
+required:
+  - data
+  - pagination

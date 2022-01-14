@@ -1,0 +1,40 @@
+title: Set User Address Request
+type: object
+description: Set user address request model
+properties:
+  label:
+    type: string
+    description: special label for the address
+    example: office
+  recipient:
+    type: string
+    description: name of the recipient of the service
+    example: bryan
+  phone_number:
+    type: string
+    description: phone number of the recipient
+    example: +62xxxx
+    pattern: '^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$'
+  address:
+    type: string
+    description: address where the mechanic should come
+    example: 'Jl. Senopati No.3, RT.8/RW.3, Kec. Kby. Baru, Jakarta Selatan, DKI Jakarta 12442'
+  address_detail:
+    type: string
+    description: field to specify address detail
+    example: 'Next to McDonald, house number 10E'
+  latitude:
+    type: string
+    description: the location's latitude
+    example: 38.8951
+  longitude:
+    type: string
+    description: the location's longitude
+    example: -77.0364
+required:
+  - label
+  - recipient
+  - phone_number
+  - address
+  - latitude
+  - longitude

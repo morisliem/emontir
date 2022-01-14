@@ -1,0 +1,34 @@
+title: Time Slots Response
+description: Time slots available for booking
+type: object
+properties:
+  time_slot:
+    type: object
+    required:
+      - date
+      - time
+    properties:
+      date:
+        type: string
+        example: '2022-01-20'
+      time:
+        type: array
+        description: List of all the timeslots for the particular date
+        items:
+          type: object
+          properties:
+            time_slot:
+              type: string
+              example: '07:00-10:00'
+              enum:
+                - '07:00-10:00'
+                - '10:00-14:00'
+                - '14:00-18:00'
+            employee_num:
+              type: number
+              example: 5
+          required:
+            - time_slot
+            - employee_num
+required:
+  - time_slot

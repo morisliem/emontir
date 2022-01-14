@@ -1,0 +1,10 @@
+title: Set Checkout Address
+type: object
+description: Set checkout address model
+properties:
+  user_address_id:
+    type: string
+    description: user address unique id
+    example: UUID string
+required:
+  - user_address_id

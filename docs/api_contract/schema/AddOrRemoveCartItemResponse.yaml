@@ -1,0 +1,15 @@
+title: Add Or Remove Cart Item Response
+type: object
+description: Add or remove cart item response model
+properties:
+  total_price:
+    type: number
+    description: total price of all the services
+    example: 500000
+  total_item:
+    type: number
+    description: total number of item in the cart
+    example: 5
+required:
+  - total_price
+  - total_item

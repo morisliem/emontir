@@ -1,0 +1,62 @@
+version: "3"
+services:
+  postgres:
+    image: postgres:14-alpine
+    restart: on-failure
+    env_file: .env
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+      - PGPORT=${DB_PORT}
+    expose:
+      - ${DB_PORT}
+
+  adminer:
+    image: adminer:standalone
+    restart: on-failure
+    ports:
+      - "${ADMINER_PORT}:8080/tcp"
+    depends_on:
+      - postgres
+
+  emontir:
+    image: golang:1.17
+    working_dir: /e-montir
+    volumes:
+      - ./:/e-montir
+    command: /bin/bash -c "go run ."
+    ports:
+      - "${SERVER_PORT}:80/tcp"
+    networks:
+      default:
+        aliases:
+          - emontir_service
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+      - PGPORT=${DB_PORT}
+      - ADMINER_PORT=${ADMINER_PORT}
+      - SERVER_ADDR=${SERVER_ADDR}
+      - SERVER_PORT=${SERVER_PORT}
+    depends_on:
+      - adminer
+      - postgres
+      - migrate
+
+  migrate:
+    image: migrate/migrate
+    restart: on-failure
+    volumes:
+      - ./db/migrations:/migrations
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://${DB_USERNAME}:${DB_PASSWORD}@postgres/${DB_DATABASE}?sslmode=disable",
+        "up",
+      ]
+    depends_on:
+      - postgres

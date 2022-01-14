@@ -1,0 +1,1033 @@
+openapi: 3.0.0
+info:
+  title: e-Montir Api
+  version: '1.0'
+  description: |
+    e-Montir API Doc
+
+    HTTP Codes:
+      | HTTP Codes | Error Code | Description|
+      |------------|------------|------------|
+      |200|-|Success OK|
+      |400|AUTH-400-01|Duplicate Email|
+      |400|AUTH-400-02|Login Failed|
+      |400|AUTH-400-03|Email Activation Failed|
+      |400|AUTH-400-04|Data not found|
+      |400|SERVER-400-01|Failed to parse payload|
+      |400|SERVER-400-02|Appointment is exists, remove appointment before change appointment date or time|
+      |401|AUTH-401-01|Token Invalid|
+      |404|SERVER-404-01|Service not exists|
+      |404|SERVER-404-02|Appointment not exists|
+      |422|AUTH-422-01|Parameter Invalid|
+      |422|AUTH-422-02|Inactive Email|
+      |500|SERVER-500-01|Server Error|
+  contact:
+    name: Raja Moris
+    email: raja.moris@icehousecorp.com
+servers:
+  - url: 'http://localhost:8080'
+tags:
+  - name: Auth
+    description: Related to user Auth
+  - name: User
+    description: Related to user detail
+  - name: Service
+    description: Related to Service
+  - name: Order
+    description: Related to Order service
+  - name: Time-slot
+    description: Related to time-slot available for booking
+  - name: Cart
+    description: Related to user Cart
+  - name: Payment
+    description: Related to payment
+paths:
+  /api/v1/auth/register:
+    post:
+      summary: Register
+      description: Endpoint to allow user to register to the system.
+      tags:
+        - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/AccountRegisterRequest.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-400-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  '/api/v1/auth/verify?email={email}&id={id}':
+    get:
+      summary: Activate email
+      description: 'Endpoint to allow user to activate their email. For current implementation, the email that was sent to user has no expiration time.'
+      tags:
+        - Auth
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+              examples:
+                example-1:
+                  value:
+                    success: true
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-400-03'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: string
+          example: helloworld@gmail.com
+        name: email
+        in: path
+        required: true
+      - schema:
+          type: string
+          example: user uuid
+        name: id
+        in: path
+        required: true
+  /api/v1/auth/login:
+    post:
+      summary: Login
+      description: 'Endpoint to allow user to login to the system. After logged in, user will get access token.'
+      tags:
+        - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/AccountLoginRequest.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/AccountLoginResponse.yaml
+              examples:
+                example-1:
+                  value:
+                    token: JWT Token
+                    expired_at: '2021-10-10T00:00:00Z'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-400-02'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  /api/v1/me/address:
+    get:
+      summary: Get list of user addresses
+      description: Endpoint get list of user addresses
+      tags:
+        - User
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/ListOfAddressResponse.yaml
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    post:
+      summary: Add new address
+      description: Endpoint to add new address to the user
+      tags:
+        - User
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/SetUserAddressRequest.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+              examples:
+                example-1:
+                  value:
+                    success: true
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: address
+                        message: address cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  '/api/v1/services?page={page}&limit={limit}':
+    get:
+      summary: List of services
+      description: Endpoint to show all the services available
+      tags:
+        - Service
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/ListOfServiceResponse.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-400-04'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: page
+                        message: page cannot be empty
+                      - name: limit
+                        message: limit must be more than 0
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: number
+          example: 1
+          minimum: 1
+        name: page
+        in: path
+        required: true
+        description: For pagination purposes to determine which page user want to retrieve the data
+      - schema:
+          type: number
+          minimum: 1
+        name: limit
+        in: path
+        required: true
+        description: 'Set how many data should be retrieved for every retrieval '
+  '/api/v1/services/search?page={page}&limit={limit}&keyword={keyword}':
+    get:
+      summary: Search services
+      description: Endpoint to search for all the services available
+      tags:
+        - Service
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/ListOfSearchServiceResponse.yaml
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: keyword
+                        message: keyword cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: number
+          example: 1
+          minimum: 1
+        name: page
+        in: path
+        required: true
+        description: For pagination purposes to determine which page user want to retrieve the data
+      - schema:
+          type: number
+          minimum: 1
+        name: limit
+        in: path
+        required: true
+        description: 'Set how many data should be retrieved for every retrieval '
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+          example: lampu
+        name: keyword
+        in: path
+        required: true
+        description: keyword that want to be searched
+  '/api/v1/services/{order_id}/{service_id}/review':
+    post:
+      summary: Review service
+      description: Endpoint to rate the service that user order
+      tags:
+        - Service
+      security:
+        - AccountToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/ReviewServiceRequest.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: rating
+                        message: rating cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: string
+          example: '1'
+        name: service_id
+        in: path
+        required: true
+        description: service id to be reviewed
+      - schema:
+          type: string
+        name: order_id
+        in: path
+        required: true
+        description: order id of the service id to be reviewed
+  '/api/v1/timeslot?date={date}':
+    get:
+      summary: Time slots
+      description: |-
+        Endpoint to show the timeslot for a particular date
+        This endpoint will be called every time user clicks the particular date from the calendar
+      tags:
+        - Time-slot
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/TimeSlotsResponse.yaml
+              examples:
+                example-1:
+                  value:
+                    time_slot:
+                      date: '2022-01-20'
+                      time:
+                        - time_slot: '07:00-10:00'
+                          employee_num: 5
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: date
+                        message: date wrong format
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: string
+          example: '2021-12-02'
+          pattern: yyyy-mm-dd
+          format: date
+        name: date
+        in: path
+        description: Date that want to be searched
+        required: true
+  /api/v1/cart:
+    get:
+      summary: Checkout detail
+      description: Endpoint to show the detail of checkout
+      tags:
+        - Cart
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/ListOfCheckoutItemResponse.yaml
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  /api/v1/cart/location:
+    post:
+      summary: Set appointment location
+      description: This endpoint is used to set a specific location for the appointment
+      tags:
+        - Cart
+      security:
+        - AccountToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/SetCheckoutAddress.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: date
+                        message: date cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  /api/v1/cart/appointment:
+    post:
+      summary: Create checkout appointment
+      description: This endpoint will be called when user has set the date and time when they want to book the service
+      tags:
+        - Cart
+      security:
+        - AccountToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/AppointmentCheckoutRequest.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: date
+                        message: date cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    delete:
+      summary: Delete checkout appointment
+      description: This endpoint will be called when user decided to change the date or time for the appointment
+      tags:
+        - Cart
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultSuccess.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  /api/v1/cart/item:
+    post:
+      summary: Add item to checkout
+      description: This endpoint will be called when user press add item in the list of services. This endpoint will add the particular item to the checkout
+      tags:
+        - Cart
+      security:
+        - AccountToken: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ./schema/AddItemToCheckout.yaml
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/AddOrRemoveCartItemResponse.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: service_id
+                        message: service_id cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters: []
+  '/api/v1/cart/item/{service_id}':
+    delete:
+      summary: Remove item from checkout
+      description: This endpoint will be called when user press remove button in the list of services. This endpoint will remove the service from the checkout
+      tags:
+        - Cart
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/AddOrRemoveCartItemResponse.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: service_id
+                        message: service_id cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: string
+          example: '1'
+        name: service_id
+        in: path
+        required: true
+        description: unique service id
+  /api/v1/orders:
+    get:
+      summary: Order list
+      description: Endpoint to show the list of user's order
+      tags:
+        - Order
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/ListOfOrdersResponse.yaml
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+  /api/v1/pay:
+    post:
+      summary: Pay order
+      description: This endpoint will be called when user has filled all the checkout fields. It moves all the data from checkout to order table. It returns a url link for user fill their payment detail
+      tags:
+        - Order
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/OrderPayResponse.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters: []
+  '/api/v1/payment/notification/{token}':
+    get:
+      summary: Get payment notification
+      description: Endpoint to get payment notification. If the transaction status is paid, mechanic will be assigned to order and order status will be updated
+      tags:
+        - Payment
+      security:
+        - AccountToken: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/GetPaymentNotifResponse.yaml
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-400-01'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/AUTH-401-01'
+        '422':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultUnprocessableEntityError.yaml
+              examples:
+                example-1:
+                  value:
+                    message: validation-failed
+                    fields:
+                      - name: token
+                        message: token cannot be empty
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: ./schema/DefaultError.yaml
+              examples:
+                example-1:
+                  $ref: '#/components/examples/SERVER-500-01'
+    parameters:
+      - schema:
+          type: string
+        name: token
+        in: path
+        required: true
+        description: unique transaction token
+components:
+  securitySchemes:
+    AccountToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Account token
+  examples:
+    AUTH-400-01:
+      value:
+        code: AUTH-400-01
+        message: email used
+    AUTH-400-02:
+      value:
+        code: AUTH-400-02
+        message: incorrect password or email
+    AUTH-400-03:
+      value:
+        code: AUTH-400-03
+        message: activation email failed
+    AUTH-400-04:
+      value:
+        code: AUTH-400-04
+        message: data not found
+    SERVER-400-01:
+      value:
+        code: SERVER-400-01
+        message: failed to parse payload
+    SERVER-500-01:
+      value:
+        code: SERVER-500-01
+        message: server error
+    AUTH-401-01:
+      value:
+        code: AUTH-401-01
+        message: invalid token

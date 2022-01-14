@@ -1,0 +1,10 @@
+title: Get Payment Notif Response
+type: object
+description: get payment notif response model
+properties:
+  transaction_status:
+    type: string
+    description: status of the transaction
+    example: PAID
+required:
+  - transaction_status

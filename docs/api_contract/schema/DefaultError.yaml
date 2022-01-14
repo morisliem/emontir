@@ -1,0 +1,13 @@
+title: Default Error Response
+type: object
+description: Default error response
+properties:
+  code:
+    type: string
+    description: Special code to signal error screen
+  message:
+    type: string
+    description: Error message from server
+required:
+  - code
+  - message

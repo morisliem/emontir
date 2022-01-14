@@ -1,0 +1,84 @@
+title: List Of Checkout Item Response
+type: object
+description: List of checkout item response model
+properties:
+  location:
+    type: object
+    required:
+      - id
+      - label
+      - recipient
+      - phone_number
+      - address
+    properties:
+      id:
+        type: string
+        description: address unique id
+        example: UUID string
+      label:
+        type: string
+        description: special label for the address
+        example: office
+      recipient:
+        type: string
+        description: name of the recipient of the service
+        example: bryan
+      phone_number:
+        type: string
+        description: phone number of the recipient
+        example: +62xxxx
+      address:
+        type: string
+        description: address where the mechanic should come
+        example: 'Jl. Senopati No.3, RT.8/RW.3, Kec. Kby. Baru, Jakarta Selatan, DKI Jakarta 12442'
+  appointment:
+    type: object
+    required:
+      - date
+      - time
+    properties:
+      date:
+        type: string
+        description: the date when user want to book for an appointment
+        example: '2022-12-25'
+        pattern: yyyy-mm-dd
+      time:
+        type: string
+        description: the timeslot when user want to book for an appointment
+        example: '10:00-14:00'
+        enum:
+          - '07:00-10:00'
+          - '10:00-14:00'
+          - '14:00-17:00'
+  items:
+    type: array
+    items:
+      type: object
+      properties:
+        id:
+          type: number
+          example: 1
+          description: service unique id
+        title:
+          type: string
+          example: ganti oli
+          description: name of the service
+        price:
+          type: number
+          example: 150000
+          description: service price
+        picture:
+          type: string
+          example: file_name.jpeg
+      required:
+        - id
+        - title
+  total_price:
+    type: number
+    description: total price the user should pay
+    example: 150000
+required:
+  - location
+  - appointment
+  - items
+  - total_price

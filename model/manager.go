@@ -1,0 +1,126 @@
+package model
+
+import (
+	"database/sql"
+	"fmt"
+	"os"
+	"sync"
+
+	"github.com/jackc/pgx"
+	"github.com/jackc/pgx/stdlib"
+	"github.com/jmoiron/sqlx"
+	"github.com/rs/zerolog/log"
+)
+
+var (
+	postgreDBOnce sync.Once
+	postgreDB     *sql.DB
+)
+
+func NewSQLDB() *sqlx.DB {
+	// dbPort, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	// if err != nil {
+	// 	log.Fatal().Err(fmt.Errorf("error when convert db_port: %w", err)).Send()
+	// }
+	postgreDBOnce.Do(func() {
+		conCfg, err := pgx.ParseURI(os.Getenv("DATABASE_URL"))
+		if err != nil {
+			log.Fatal().Err(fmt.Errorf("failed to connect to db: %w", err)).Send()
+		}
+		// conCfg := pgx.ConnConfig{
+		// 	Host:     os.Getenv("DB_HOST"),
+		// 	Port:     uint16(dbPort),
+		// 	Database: os.Getenv("DB_DATABASE"),
+		// 	User:     os.Getenv("DB_USERNAME"),
+		// 	Password: os.Getenv("DB_PASSWORD"),
+		// }
+		db := stdlib.OpenDB(conCfg)
+		postgreDB = db
+	})
+
+	err := postgreDB.Ping()
+	if err != nil {
+		log.Fatal().Err(fmt.Errorf("error when ping database: %w", err)).Send()
+	}
+
+	return sqlx.NewDb(postgreDB, "postgres")
+}
+
+type Manager interface {
+	User() User
+	Service() Service
+	Timeslot() Timeslot
+	Cart() Cart
+	Order() Order
+}
+
+type manager struct {
+	SQLDB *sqlx.DB
+}
+
+func NewManager() Manager {
+	sm := &manager{
+		SQLDB: NewSQLDB(),
+	}
+	return sm
+}
+
+var (
+	userModelOnce sync.Once
+	userModel     User
+)
+
+func (c *manager) User() User {
+	userModelOnce.Do(func() {
+		userModel = NewUser(c.SQLDB)
+	})
+	return userModel
+}
+
+var (
+	serviceModelOnce sync.Once
+	serviceModel     Service
+)
+
+func (c *manager) Service() Service {
+	serviceModelOnce.Do(func() {
+		serviceModel = NewService(c.SQLDB)
+	})
+	return serviceModel
+}
+
+var (
+	timeslotModelOnce sync.Once
+	timeslotModel     Timeslot
+)
+
+func (c *manager) Timeslot() Timeslot {
+	timeslotModelOnce.Do(func() {
+		timeslotModel = NewTimeslot(c.SQLDB)
+	})
+	return timeslotModel
+}
+
+var (
+	cartModelOnce sync.Once
+	cartModel     Cart
+)
+
+func (c *manager) Cart() Cart {
+	cartModelOnce.Do(func() {
+		cartModel = NewCart(c.SQLDB)
+	})
+	return cartModel
+}
+
+var (
+	orderModelOnce sync.Once
+	orderModel     Order
+)
+
+func (c *manager) Order() Order {
+	orderModelOnce.Do(func() {
+		orderModel = NewOrder(c.SQLDB)
+	})
+	return orderModel
+}

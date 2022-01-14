@@ -1,0 +1,34 @@
+title: Order Pay Response
+type: object
+description: Order pay response model
+properties:
+  code:
+    type: string
+    example: 0000
+    description: special code to indicate the request status
+  message:
+    type: string
+    example: success
+    description: message to indicate the request status
+  data:
+    type: object
+    required:
+      - token
+      - redirect_url
+      - finish_url
+    properties:
+      token:
+        type: string
+        example: token
+        description: unique transaction token
+      redirect_url:
+        type: string
+        example: http://localhost:1010
+        description: redirect_url to navigate user to the payment webview
+      finish_url:
+        type: string
+        example: http://localhost:1010
+required:
+  - code
+  - message
+  - data

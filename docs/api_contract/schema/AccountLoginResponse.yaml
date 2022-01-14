@@ -1,0 +1,15 @@
+title: Account Login Response
+type: object
+description: Login response model
+properties:
+  token:
+    type: string
+    description: JWT
+    example: JWT Token
+  expired_at:
+    type: string
+    description: Token expired time
+    example: '2021-10-10T00:00:00Z'
+required:
+  - token
+  - expired_at

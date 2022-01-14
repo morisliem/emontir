@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS "motor_cycle_brands";
