@@ -118,7 +118,7 @@ func createHandler(mailerCfg *mailer.Config) http.Handler {
 		apiRoute.With(middleware.ValidateToken()).Post("/cart/appointment", h.Cart.SetCartAppointment)
 		apiRoute.With(middleware.ValidateToken()).Delete("/cart/appointment", h.Cart.RemoveCartAppointment)
 
-		apiRoute.With(middleware.ValidateToken()).Post("/pay/{order_id}/{total_price}", h.Payment.MakePayment)
+		apiRoute.With(middleware.ValidateToken()).Post("/pay/{order_id}", h.Payment.MakePayment)
 		apiRoute.Post("/payment/notification", h.Payment.PaymentNotification)
 
 		apiRoute.With(middleware.ValidateToken()).Post("/order", h.Order.PlaceOrder)

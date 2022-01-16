@@ -114,13 +114,14 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 	}
 
 	err = c.orderModel.SetOrder(ctx, userID, &model.OrderBaseModel{
-		ID:            orderID,
-		UserID:        userID,
-		UserAddressID: userLoc.ID,
-		TimeSlot:      res.Appointment.Time,
-		Date:          res.Appointment.Date,
-		TotalPrice:    float64(totalPrice),
-		CreatedAt:     time.Now(),
+		ID:              orderID,
+		UserID:          userID,
+		UserAddressID:   userLoc.ID,
+		TimeSlot:        res.Appointment.Time,
+		Date:            res.Appointment.Date,
+		MotorCycleBrand: res.Appointment.BrandName,
+		TotalPrice:      float64(totalPrice),
+		CreatedAt:       time.Now(),
 	})
 
 	if err != nil {

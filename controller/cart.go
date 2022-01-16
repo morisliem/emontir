@@ -21,7 +21,7 @@ type cartCtx struct {
 }
 
 type Cart interface {
-	SetCartAppointment(ctx context.Context, userID, date, time string) error
+	SetCartAppointment(ctx context.Context, form *CartAppointmentRequest) error
 	RemoveCartAppointment(ctx context.Context, userID string) error
 	AddServiceToCart(ctx context.Context, serviceID int, cartID string) (*CartTotalItemAndPrice, error)
 	RemoveServiceFromCart(ctx context.Context, serviceID int, cartID string) (*CartTotalItemAndPrice, error)
@@ -37,9 +37,10 @@ func NewCart(cartModel model.Cart, userModel model.User) Cart {
 
 type (
 	CartAppointmentRequest struct {
-		UserID string
-		Date   string `json:"date"` // yyyy-mm-dd
-		Time   string `json:"time"`
+		UserID    string
+		Date      string `json:"date"` // yyyy-mm-dd
+		Time      string `json:"time"`
+		BrandName string `json:"motorcycle_brand_name"`
 	}
 
 	CartAppointment struct {
@@ -152,8 +153,8 @@ func (req *AddOrRemoveServiceToCartRequest) ValidateAddOrRemoveServiceToCart() (
 }
 
 // nolint(gosec) // false positive
-func (c *cartCtx) SetCartAppointment(ctx context.Context, userID, dateIn, timeIn string) error {
-	isCartAvailable, data, err := c.CartModel.IsCartAvailable(ctx, userID)
+func (c *cartCtx) SetCartAppointment(ctx context.Context, form *CartAppointmentRequest) error {
+	isCartAvailable, data, err := c.CartModel.IsCartAvailable(ctx, form.UserID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when checking IsCartAvailable: %w", err)).Send()
 		return err
@@ -166,7 +167,7 @@ func (c *cartCtx) SetCartAppointment(ctx context.Context, userID, dateIn, timeIn
 			return &handler.InternalServerError
 		}
 		// return nil because user is trying to create the same appointment as in the database
-		if appDate.Local().Format(date.Format) == dateIn && data.Time == timeIn {
+		if appDate.Local().Format(date.Format) == form.Date && data.Time == form.Time {
 			return nil
 		}
 
@@ -176,9 +177,10 @@ func (c *cartCtx) SetCartAppointment(ctx context.Context, userID, dateIn, timeIn
 	}
 
 	err = c.CartModel.SetCartAppointment(ctx, &model.CartAppointment{
-		UserID: userID,
-		Date:   dateIn,
-		Time:   timeIn,
+		UserID:    form.UserID,
+		Date:      form.Date,
+		Time:      form.Time,
+		BrandName: form.BrandName,
 	})
 
 	if err != nil {

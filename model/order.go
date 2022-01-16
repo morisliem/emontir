@@ -30,7 +30,7 @@ type (
 type Order interface {
 	SetOrder(ctx context.Context, userID string, param *OrderBaseModel) error
 	AssignMechanic(ctx context.Context, orderID string) error
-	CheckOrder(ctx context.Context, orderID string) (bool, error)
+	CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel, error)
 }
 
 type order struct {
@@ -55,7 +55,7 @@ func NewOrder(db *sqlx.DB) Order {
 var (
 	setOrder        = "setOrder"
 	setOrderField1  = `("id", "user_id", "user_address_id", "date", "time_slot", "created_at", `
-	setOrderFields2 = `"total_price", "motor_cycle_brand_name", "status_order")`
+	setOrderFields2 = `"total_price", "motorcycle_brand_name", "status_order")`
 	setOrderFields  = setOrderField1 + setOrderFields2
 	setOrderSQL     = `INSERT INTO "orders" ` + setOrderFields + ` VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 
@@ -202,19 +202,19 @@ func (c *order) AssignMechanic(ctx context.Context, orderID string) error {
 	return nil
 }
 
-func (c *order) CheckOrder(ctx context.Context, orderID string) (bool, error) {
+func (c *order) CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel, error) {
 	var order OrderBaseModel
 	err := c.queries[getOrderList].GetContext(ctx, &order, orderID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, &handler.OrderNotExists
+			return nil, &handler.OrderNotExists
 		}
-		return false, err
+		return nil, err
 	}
 
 	if order.OrderStatus.String != "waiting for payment" {
-		return true, &handler.OrderHasBeenPaid
+		return nil, &handler.OrderHasBeenPaid
 	}
 
-	return true, nil
+	return &order, nil
 }

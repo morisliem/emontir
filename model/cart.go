@@ -23,9 +23,10 @@ type (
 	}
 
 	CartAppointment struct {
-		UserID string `db:"user_id"`
-		Date   string `db:"date"`
-		Time   string `db:"time_slot"`
+		UserID    string `db:"user_id"`
+		Date      string `db:"date"`
+		Time      string `db:"time_slot"`
+		BrandName string `db:"motorcycle_brand_name"`
 	}
 
 	CartItemAndPrice struct {
@@ -70,10 +71,10 @@ var (
 	getTotalPriceAndTotalItemSQL    = getTotalPriceAndTotalItemSelect + " cart_items " + getTotalPriceAndTotalItemJoin
 
 	setAppointment    = "setAppointment"
-	setAppointmentSQL = `INSERT INTO "carts" ("id", "user_id", "date", "time_slot") VALUES ($1,$2,$3,$4)`
+	setAppointmentSQL = `INSERT INTO "carts" ("id", "user_id", "date", "time_slot", "motorcycle_brand_name") VALUES ($1,$2,$3,$4,$5)`
 
 	getAppointment    = "getAppointment"
-	getAppointmentSQL = `SELECT "date", "time_slot" FROM "carts" WHERE "user_id" = $1`
+	getAppointmentSQL = `SELECT "date", "time_slot", "motorcycle_brand_name" FROM "carts" WHERE "user_id" = $1`
 
 	removeCartAppointment    = "removeCartAppointment"
 	removeCartAppointmentSQL = `DELETE FROM "carts" WHERE "id" = $1`
@@ -103,7 +104,7 @@ var (
 )
 
 func (c *cart) SetCartAppointment(ctx context.Context, param *CartAppointment) error {
-	_, err := c.queries[setAppointment].ExecContext(ctx, param.UserID, param.UserID, param.Date, param.Time)
+	_, err := c.queries[setAppointment].ExecContext(ctx, param.UserID, param.UserID, param.Date, param.Time, param.BrandName)
 	if err != nil {
 		return err
 	}

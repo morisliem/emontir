@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -23,8 +22,7 @@ type paymentCtx struct {
 }
 
 type Payment interface {
-	Pay(ctx context.Context, orderID string, totalPrice int) (*TransactionResponse, error)
-	GetNotification(ctx context.Context, token string) (*PaymentNotifResponse, error)
+	Pay(ctx context.Context, orderID string) (*TransactionResponse, error)
 }
 
 func NewPayment(orderModel model.Order, cartModel model.Cart) Payment {
@@ -105,12 +103,15 @@ type (
 		TotalPriceString string `json:"total_price"`
 		TotalPrice       int
 	}
+
+	HttpRequest struct {
+		Client *http.Client
+	}
 )
 
 func (req *PaymentRequest) ValidatePaymentRequest() ([]handler.Fields, error) {
 	var count int
 	var fields []handler.Fields
-	totalPriceValid := true
 	err := validator.ValidateOrderID(req.OrderID)
 	if err != nil {
 		count++
@@ -120,49 +121,20 @@ func (req *PaymentRequest) ValidatePaymentRequest() ([]handler.Fields, error) {
 		})
 	}
 
-	err = validator.ValidateTotalPrice(req.TotalPriceString)
-	if err != nil {
-		totalPriceValid = false
-		count++
-		fields = append(fields, handler.Fields{
-			Name:    "total_price",
-			Message: err.Error(),
-		})
-	}
-
-	if totalPriceValid {
-		totalPrice, parseErr := strconv.Atoi(req.TotalPriceString)
-		if parseErr != nil {
-			count++
-			totalPriceValid = false
-			fields = append(fields, handler.Fields{
-				Name:    "total_price",
-				Message: err.Error(),
-			})
-		}
-		if totalPrice < 0 && totalPriceValid {
-			count++
-			fields = append(fields, handler.Fields{
-				Name:    "total_price",
-				Message: "total price must be more than 0",
-			})
-		}
-		req.TotalPrice = totalPrice
-	}
-
 	if count != 0 {
 		return fields, errors.New("validation-failed")
 	}
 	return nil, nil
 }
 
-func (c *paymentCtx) Pay(ctx context.Context, orderID string, totalPrice int) (*TransactionResponse, error) {
-	_, err := c.orderModel.CheckOrder(ctx, orderID)
+func (c *paymentCtx) Pay(ctx context.Context, orderID string) (*TransactionResponse, error) {
+	order, err := c.orderModel.CheckOrder(ctx, orderID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when checkingOrder: %w", err)).Send()
 		return nil, err
 	}
 
+	totalPrice := int(order.TotalPrice)
 	transactionRes := TransactionResponse{}
 	payload := strings.NewReader(fmt.Sprintf(`{
 	    "transaction_detail":{
@@ -209,52 +181,4 @@ func (c *paymentCtx) Pay(ctx context.Context, orderID string, totalPrice int) (*
 
 	transactionRes.Data.FinishURL = os.Getenv("PAYMENT_REDIRECT_BASE_URL")
 	return &transactionRes, nil
-}
-
-func (c *paymentCtx) GetNotification(ctx context.Context, token string) (*PaymentNotifResponse, error) {
-	var result PaymentNotif
-
-	client := http.Client{}
-	req, err := http.NewRequestWithContext(
-		ctx,
-		"GET",
-		fmt.Sprintf("%s/transactions/%s", os.Getenv("PAYMENT_BASE_URL"), token),
-		nil,
-	)
-
-	if err != nil {
-		return nil, &handler.InternalServerError
-	}
-
-	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
-	req.Header.Add("token", os.Getenv("PAYMENT_TOKEN"))
-
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, &handler.InternalServerError
-	}
-
-	defer res.Body.Close()
-
-	resData, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, &handler.InternalServerError
-	}
-
-	err = json.Unmarshal([]byte(string(resData)), &result)
-	if err != nil {
-		return nil, err
-	}
-
-	if result.Data.TransactionStatus == "PAID" {
-		err = c.orderModel.AssignMechanic(ctx, result.Data.OrderID)
-		if err != nil {
-			log.Error().Err(fmt.Errorf("error when assignMechanic : %w", err)).Send()
-			return nil, err
-		}
-	}
-
-	return &PaymentNotifResponse{
-		TransactionStatus: result.Data.TransactionStatus,
-	}, err
 }

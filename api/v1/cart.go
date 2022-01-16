@@ -35,7 +35,7 @@ func (c *CartHandler) SetCartAppointment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = c.cartController.SetCartAppointment(r.Context(), request.UserID, request.Date, request.Time)
+	err = c.cartController.SetCartAppointment(r.Context(), request)
 	if err != nil {
 		handler.ResponseError(w, err)
 		return
