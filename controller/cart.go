@@ -290,6 +290,7 @@ func (c *cartCtx) CartDetail(ctx context.Context, userID string) (*CartDetail, e
 
 		cartDetail.Appointment.Date = appointmentDate.Local().Format(date.Format)
 		cartDetail.Appointment.Time = res.Appointment.Time
+		cartDetail.BrandName = res.Appointment.BrandName
 		cartDetail.Items = cartItem
 		cartDetail.TotalPrice = totalPrice
 		return &cartDetail, nil
