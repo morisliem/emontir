@@ -55,7 +55,7 @@ func NewOrder(db *sqlx.DB) Order {
 var (
 	setOrder        = "setOrder"
 	setOrderField1  = `("id", "user_id", "user_address_id", "date", "time_slot", "created_at", `
-	setOrderFields2 = `"total_price", "motorcycle_brand_name", "status_order")`
+	setOrderFields2 = `"total_price", "motor_cycle_brand_name", "status_order")`
 	setOrderFields  = setOrderField1 + setOrderFields2
 	setOrderSQL     = `INSERT INTO "orders" ` + setOrderFields + ` VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
 
