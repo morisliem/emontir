@@ -44,9 +44,8 @@ type (
 	}
 
 	CartAppointment struct {
-		Date      string `json:"date"` // yyyy-mm-dd
-		Time      string `json:"time"`
-		BrandName string `json:"motorcycle_brand_name"`
+		Date string `json:"date"` // yyyy-mm-dd
+		Time string `json:"time"`
 	}
 
 	AddOrRemoveServiceToCartRequest struct {
@@ -59,6 +58,7 @@ type (
 	CartDetail struct {
 		Location    UserCheckoutAddress `json:"location"`
 		Appointment CartAppointment     `json:"appointment"`
+		BrandName   string              `json:"motorcycle_brand_name"`
 		Items       []CartItems         `json:"items"`
 		TotalPrice  float64             `json:"total_price"`
 	}
@@ -309,7 +309,7 @@ func (c *cartCtx) CartDetail(ctx context.Context, userID string) (*CartDetail, e
 	cartDetail.Location.Recipient = loc.RecipientName
 	cartDetail.Appointment.Date = appointmentDate.Local().Format(date.Format)
 	cartDetail.Appointment.Time = res.Appointment.Time
-	cartDetail.Appointment.BrandName = res.Appointment.BrandName
+	cartDetail.BrandName = res.Appointment.BrandName
 	cartDetail.Items = cartItem
 	cartDetail.TotalPrice = totalPrice
 	return &cartDetail, nil
