@@ -80,8 +80,7 @@ type (
 	}
 
 	PlcaeOrderResponse struct {
-		OrderID    string `json:"order_id"`
-		TotalPrice int    `json:"total_price"`
+		OrderID string `json:"order_id"`
 	}
 )
 
@@ -130,8 +129,7 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 	}
 
 	return &PlcaeOrderResponse{
-		OrderID:    orderID,
-		TotalPrice: totalPrice,
+		OrderID: orderID,
 	}, nil
 }
 
