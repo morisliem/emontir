@@ -112,8 +112,6 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 		return nil, err
 	}
 
-	fmt.Println(res)
-
 	err = c.orderModel.SetOrder(ctx, userID, &model.OrderBaseModel{
 		ID:              orderID,
 		UserID:          userID,

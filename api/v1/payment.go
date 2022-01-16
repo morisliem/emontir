@@ -3,7 +3,6 @@ package v1
 import (
 	"e-montir/api/handler"
 	"e-montir/controller"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi"
@@ -45,16 +44,11 @@ func (c *PaymentHandler) MakePayment(w http.ResponseWriter, r *http.Request) {
 // endpoint to check the payment status.
 // it paid then order status will be updated and mechanic will be assigned to the order
 func (c *PaymentHandler) PaymentNotification(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(r)
 	request := new(controller.PaymentDetail)
 	if err := handler.DecodeJSON(r, request); err != nil {
 		handler.ResponseError(w, &handler.ParsePayloadError)
 		return
 	}
-
-	fmt.Println("here")
-
-	fmt.Println(request)
 
 	if request.TransactionStatus == "PAID" {
 		err := c.orderController.PaymentReceived(r.Context(), request.OrderID)
