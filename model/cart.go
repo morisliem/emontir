@@ -161,7 +161,7 @@ func (c *cart) RemoveServiceFromCartItem(ctx context.Context, serviceID int, car
 func (c *cart) GetCartDetail(ctx context.Context, uid string) (*CartBaseModel, error) {
 	var appointment CartAppointment
 	var cartItems []CartItemBaseModel
-	err := c.queries[getAppointment].QueryRowContext(ctx, uid).Scan(&appointment.Date, &appointment.Time)
+	err := c.queries[getAppointment].QueryRowContext(ctx, uid).Scan(&appointment.Date, &appointment.Time, &appointment.BrandName)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (c *cart) getTotalItemAndTotalPriceFromCart(ctx context.Context, cartID str
 
 func (c *cart) IsCartAvailable(ctx context.Context, cartID string) (bool, *CartAppointment, error) {
 	var appointment CartAppointment
-	err := c.queries[getAppointment].QueryRowContext(ctx, cartID).Scan(&appointment.Date, &appointment.Time)
+	err := c.queries[getAppointment].QueryRowContext(ctx, cartID).Scan(&appointment.Date, &appointment.Time, &appointment.BrandName)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, nil, nil
