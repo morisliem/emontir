@@ -119,6 +119,10 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 		return nil, err
 	}
 
+	if totalPrice < 250000 {
+		totalPrice = totalPrice + 15000
+	}
+
 	err = c.orderModel.SetOrder(ctx, userID, &model.OrderBaseModel{
 		ID:              orderID,
 		UserID:          userID,
@@ -126,7 +130,7 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 		TimeSlot:        res.Appointment.Time,
 		Date:            res.Appointment.Date,
 		MotorCycleBrand: res.Appointment.BrandName,
-		TotalPrice:      float64(totalPrice + 15000),
+		TotalPrice:      float64(totalPrice),
 		CreatedAt:       time.Now(),
 	})
 
