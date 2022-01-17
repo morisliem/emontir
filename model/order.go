@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"e-montir/api/handler"
+	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -256,6 +257,7 @@ func (c *order) AssignMechanic(ctx context.Context, orderID string) error {
 
 func (c *order) CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel, error) {
 	var order OrderBaseModel
+	fmt.Println(orderID)
 	err := c.queries[getOrderListByID].GetContext(ctx, &order, orderID)
 	if err != nil {
 		if err == sql.ErrNoRows {
