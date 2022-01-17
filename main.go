@@ -106,6 +106,7 @@ func createHandler(mailerCfg *mailer.Config) http.Handler {
 
 		apiRoute.With(middleware.ValidateToken()).Get("/services", h.Service.ListOfServices)
 		apiRoute.With(middleware.ValidateToken()).Get("/services/search", h.Service.SearchService)
+		apiRoute.With(middleware.ValidateToken()).Post("/services/{order_id}/{service_id}/review", h.Review.AddServiceReview)
 
 		apiRoute.With(middleware.ValidateToken()).Get("/timeslot", h.Timeslot.ListOfTimeslot)
 
@@ -122,6 +123,7 @@ func createHandler(mailerCfg *mailer.Config) http.Handler {
 		apiRoute.Post("/payment/notification", h.Payment.PaymentNotification)
 
 		apiRoute.With(middleware.ValidateToken()).Post("/order", h.Order.PlaceOrder)
+		apiRoute.With(middleware.ValidateToken()).Get("/orders", h.Order.OrderLists)
 	})
 
 	return r

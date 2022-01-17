@@ -25,12 +25,44 @@ type (
 		Date            string         `db:"date"`
 		MechanicID      sql.NullInt64  `db:"mechanic_id"`
 	}
+
+	OrderItem struct {
+		ServiceID int     `db:"id"`
+		Title     string  `db:"title"`
+		Price     float64 `db:"price"`
+		Picture   string  `db:"picture"`
+	}
+
+	OrderLocation struct {
+		ID            string    `db:"id"`
+		Label         string    `db:"label"`
+		Address       string    `db:"address"`
+		AddressDetail string    `db:"address_detail"`
+		PhoneNumber   string    `db:"phone_num"`
+		RecipientName string    `db:"recipient_name"`
+		Latitude      string    `db:"latitude"`
+		Longitude     string    `db:"longitude"`
+		CreatedAt     time.Time `db:"created_at"`
+	}
+
+	OrderMechanic struct {
+		ID               string         `db:"id"`
+		Name             string         `db:"name"`
+		PhoneNumber      string         `db:"phone_number"`
+		CompletedService int            `db:"completed_service"`
+		Picture          sql.NullString `db:"picture"`
+		Status           bool           `db:"status"`
+	}
 )
 
 type Order interface {
 	SetOrder(ctx context.Context, userID string, param *OrderBaseModel) error
 	AssignMechanic(ctx context.Context, orderID string) error
 	CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel, error)
+	ListOfOrders(ctx context.Context, userID string) ([]OrderBaseModel, error)
+	ListOfOrderItems(ctx context.Context, orderID string) ([]OrderItem, error)
+	OrderLocation(ctx context.Context, userAddressID string) (*OrderLocation, error)
+	GetOrderMechanic(ctx context.Context, mechanicID int) (*OrderMechanic, error)
 }
 
 type order struct {
@@ -82,11 +114,27 @@ var (
 	updateMechanicAvailability    = "updateMechanicAvailability"
 	updateMechanicAvailabilitySQL = `UPDATE "mechanics" SET "is_available" = $2 WHERE "id" = $1`
 
-	getOrderList       = "getOrder"
-	getOrderListField1 = `"id", "description", "total_price", "user_address_id", "created_at", "status_detail", `
-	getOrderListField2 = `"status_order", "user_id", "motor_cycle_brand_name", "time_slot", "date", "mechanic_id"`
-	getOrderListField  = getOrderListField1 + getOrderListField2
-	getOrderListSQL    = `SELECT ` + getOrderListField + `FROM "orders" WHERE "id" = $1`
+	getOrderItems     = "OrderItems"
+	getOrderItemsJoin = `LEFT OUTER JOIN "services" ON order_items.service_id = services.id WHERE "order_id" = $1 `
+	getOrderItemsSQL  = `SELECT services.id AS "id", "title", "price", "picture" FROM "order_items" ` + getOrderItemsJoin
+
+	getOrderLocation          = "getOrderLocation"
+	getOrderLocationFields    = `"id","label","address","address_detail","phone_num","recipient_name","latitude","longitude"`
+	getOrderLocationCondition = `WHERE "id" = $1`
+	getOrderLocationSQL       = `SELECT ` + getOrderLocationFields + ` FROM "user_addresses" ` + getOrderLocationCondition
+
+	getOrderListByID    = "getOrder"
+	getOrderListField1  = `"id", "description", "total_price", "user_address_id", "created_at", "status_detail", `
+	getOrderListField2  = `"status_order", "user_id", "motor_cycle_brand_name", "time_slot", "date", "mechanic_id"`
+	getOrderListField   = getOrderListField1 + getOrderListField2
+	getOrderListByIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "id" = $1`
+
+	getOrderListByUserID    = "getOrder"
+	getOrderListByUserIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "user_id" = $1`
+
+	getMechanic       = "getMechanic"
+	getMechanicFields = `"id", "name", "phone_number", "completed_service", "picture"`
+	getMechanicSQL    = `SELECT ` + getMechanicFields + ` FROM "mechanics" WHERE "id" = $1`
 
 	orderQueries = map[string]string{
 		setOrder:                   setOrderSQL,
@@ -96,7 +144,11 @@ var (
 		assignMechanic:             assignMechanicSQL,
 		getMechanicIDs:             getMechanicIDsSQL,
 		updateMechanicAvailability: updateMechanicAvailabilitySQL,
-		getOrderList:               getOrderListSQL,
+		getOrderListByID:           getOrderListByIDSQL,
+		getOrderItems:              getOrderItemsSQL,
+		getOrderLocation:           getOrderLocationSQL,
+		getMechanic:                getMechanicSQL,
+		getOrderListByUserID:       getOrderListByUserIDSQL,
 	}
 )
 
@@ -204,7 +256,7 @@ func (c *order) AssignMechanic(ctx context.Context, orderID string) error {
 
 func (c *order) CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel, error) {
 	var order OrderBaseModel
-	err := c.queries[getOrderList].GetContext(ctx, &order, orderID)
+	err := c.queries[getOrderListByID].GetContext(ctx, &order, orderID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, &handler.OrderNotExists
@@ -217,4 +269,40 @@ func (c *order) CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel
 	}
 
 	return &order, nil
+}
+
+func (c *order) ListOfOrders(ctx context.Context, userID string) ([]OrderBaseModel, error) {
+	var result []OrderBaseModel
+	err := c.queries[getOrderListByUserID].SelectContext(ctx, &result, userID)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *order) ListOfOrderItems(ctx context.Context, orderID string) ([]OrderItem, error) {
+	var result []OrderItem
+	err := c.queries[getOrderItems].SelectContext(ctx, &result, orderID)
+	if err != nil {
+		return nil, err
+	}
+	return result, err
+}
+
+func (c *order) OrderLocation(ctx context.Context, userAddressID string) (*OrderLocation, error) {
+	var result OrderLocation
+	err := c.queries[getOrderLocation].GetContext(ctx, &result, userAddressID)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *order) GetOrderMechanic(ctx context.Context, mechanicID int) (*OrderMechanic, error) {
+	var result OrderMechanic
+	err := c.queries[getMechanic].GetContext(ctx, &result, mechanicID)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
 }

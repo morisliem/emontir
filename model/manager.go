@@ -52,6 +52,7 @@ type Manager interface {
 	Timeslot() Timeslot
 	Cart() Cart
 	Order() Order
+	Review() Review
 }
 
 type manager struct {
@@ -123,4 +124,16 @@ func (c *manager) Order() Order {
 		orderModel = NewOrder(c.SQLDB)
 	})
 	return orderModel
+}
+
+var (
+	reviewModelOnce sync.Once
+	reviewModel     Review
+)
+
+func (c *manager) Review() Review {
+	reviewModelOnce.Do(func() {
+		reviewModel = NewReview(c.SQLDB)
+	})
+	return reviewModel
 }

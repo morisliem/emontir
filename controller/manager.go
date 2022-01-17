@@ -13,6 +13,7 @@ type Manager interface {
 	Cart() Cart
 	Order() Order
 	Payment() Payment
+	Review() Review
 }
 
 type manager struct {
@@ -108,4 +109,16 @@ func (c *manager) Payment() Payment {
 		paymentController = NewPayment(c.modelManager.Order(), c.modelManager.Cart())
 	})
 	return paymentController
+}
+
+var (
+	reviewControllerOnce sync.Once
+	reviewController     Review
+)
+
+func (c *manager) Review() Review {
+	reviewControllerOnce.Do(func() {
+		reviewController = NewReview(c.modelManager.Review(), c.modelManager.Cart())
+	})
+	return reviewController
 }

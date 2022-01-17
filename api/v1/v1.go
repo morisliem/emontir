@@ -13,6 +13,7 @@ type Handler struct {
 	User     UserHandler
 	Order    OrderHandler
 	Payment  PaymentHandler
+	Review   ReviewHandler
 }
 
 func GetHandler(c controller.Manager, mailerCfg *mailer.Config) Handler {
@@ -24,5 +25,6 @@ func GetHandler(c controller.Manager, mailerCfg *mailer.Config) Handler {
 		User:     NewUserHandler(c.User()),
 		Order:    NewOrderHandler(c.Order()),
 		Payment:  NewPaymentHandler(c.Payment(), c.Order()),
+		Review:   NewReviewHandler(c.Review()),
 	}
 }

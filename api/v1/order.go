@@ -33,3 +33,14 @@ func (c *OrderHandler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 
 	handler.GenerateResponse(w, http.StatusOK, res)
 }
+
+func (c *OrderHandler) OrderLists(w http.ResponseWriter, r *http.Request) {
+	userID := handler.GetTokenClaim(r.Context()).ID
+
+	res, err := c.orderController.ListOfOrders(r.Context(), userID)
+	if err != nil {
+		handler.ResponseError(w, &handler.InternalServerError)
+		return
+	}
+	handler.GenerateResponse(w, http.StatusOK, res)
+}

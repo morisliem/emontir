@@ -16,6 +16,7 @@ var (
 	CartAppointmentAvailable    = EmontirError{Code: "SERVER-400-02", Message: "appointment is exists, remove appointment before change appointment date or time"}
 	NoEmployeeError             = EmontirError{Code: "SERVER-400-03", Message: "no employee available"}
 	OrderHasBeenPaid            = EmontirError{Code: "SERVER-400-04", Message: "order has been paid"}
+	ServiceIsReviewed           = EmontirError{Code: "SERVER-400-05", Message: "service has been reviewed"}
 	ServiceNotExists            = EmontirError{Code: "SERVER-404-01", Message: "service not exists"}
 	CartAppointmentNotAvailable = EmontirError{Code: "SERVER-404-02", Message: "appointment not exists"}
 	OrderNotExists              = EmontirError{Code: "SERVER-404-03", Message: "cannot make payment to not exist order"}

@@ -216,3 +216,19 @@ func ValidateTotalPrice(totalPrice string) error {
 	}
 	return nil
 }
+
+func ValidateRating(rating string) error {
+	if strings.TrimSpace(rating) == "" {
+		return fmt.Errorf("rating cannot be empty")
+	}
+	return nil
+}
+
+func ValidateFeedback(feedback string) error {
+	if strings.TrimSpace(feedback) != "" {
+		if len(feedback) < 10 || len(feedback) > 300 {
+			return fmt.Errorf("feedback must be between 10 and 300 characters")
+		}
+	}
+	return nil
+}

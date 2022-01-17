@@ -52,3 +52,7 @@ func (m *MockManagerController) Order() Order {
 func (m *MockManagerController) Payment() Payment {
 	return nil
 }
+
+func (m *MockManagerController) Review() Review {
+	return nil
+}

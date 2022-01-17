@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"database/sql"
 	"e-montir/api/handler"
 	"e-montir/model"
 	"fmt"
@@ -19,6 +20,7 @@ type orderCtx struct {
 type Order interface {
 	PlaceOrder(ctx context.Context, userID, orderID string) (*PlcaeOrderResponse, error)
 	PaymentReceived(ctx context.Context, orderID string) error
+	ListOfOrders(ctx context.Context, userID string) ([]OrderListResponse, error)
 }
 
 func NewOrder(orderModel model.Order, cartModel model.Cart, userModel model.User) Order {
@@ -63,6 +65,13 @@ type (
 		PhoneNum  string `json:"phone_number"`
 	}
 
+	Mechanic struct {
+		Name             string `json:"name"`
+		PhoneNumber      string `json:"phone_number"`
+		CompletedService int    `json:"completed_service"`
+		Picture          string `json:"picture"`
+	}
+
 	OrderListResponse struct {
 		ID              string           `json:"id"`
 		UserID          string           `json:"user_id"`
@@ -71,12 +80,10 @@ type (
 		Appointment     OrderAppointment `json:"appointment"`
 		Location        OrderLocation    `json:"location"`
 		Items           []OrderItem      `json:"items"`
+		Mechanic        Mechanic         `json:"mechanic"`
 		TotalPrice      float64          `json:"total_price"`
-		Status          string           `json:"status"`
-	}
-
-	UpdateOrderRequest struct {
-		ID string `json:"id"`
+		StatusOrder     string           `json:"status_order"`
+		StatusDetail    string           `json:"status_detail"`
 	}
 
 	PlcaeOrderResponse struct {
@@ -119,7 +126,7 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 		TimeSlot:        res.Appointment.Time,
 		Date:            res.Appointment.Date,
 		MotorCycleBrand: res.Appointment.BrandName,
-		TotalPrice:      float64(totalPrice),
+		TotalPrice:      float64(totalPrice + 15000),
 		CreatedAt:       time.Now(),
 	})
 
@@ -140,4 +147,104 @@ func (c *orderCtx) PaymentReceived(ctx context.Context, orderID string) error {
 		return err
 	}
 	return nil
+}
+
+func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) ([]OrderListResponse, error) {
+	orderListResponse := make([]OrderListResponse, 0)
+	orderLists, err := c.orderModel.ListOfOrders(ctx, userID)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("error when getListOfOrders : %w", err)).Send()
+		return nil, err
+	}
+
+	for _, orderlist := range orderLists {
+		var orderItems []OrderItem
+		res, err := c.orderModel.ListOfOrderItems(ctx, orderlist.ID)
+		if err != nil {
+			log.Error().Err(fmt.Errorf("error when getListOfOrderItems : %w", err)).Send()
+			return nil, err
+		}
+
+		for _, v := range res {
+			tmp := OrderItem{
+				ServiceID: v.ServiceID,
+				Title:     v.Title,
+				Price:     v.Price,
+				Picture:   v.Picture,
+			}
+			orderItems = append(orderItems, tmp)
+		}
+
+		userLoc, err := c.orderModel.OrderLocation(ctx, orderlist.UserAddressID)
+		if err != nil {
+			log.Error().Err(fmt.Errorf("error when getOrderLocation : %w", err)).Send()
+			return nil, err
+		}
+
+		appointmentDate, err := time.Parse(time.RFC3339, orderlist.Date)
+		if err != nil {
+			log.Error().Err(fmt.Errorf("error when parsingDate: %w", err)).Send()
+			return nil, &handler.InternalServerError
+		}
+
+		appointment := OrderAppointment{
+			Date: appointmentDate.Local().Format("2006-01-02"),
+			Time: orderlist.TimeSlot,
+		}
+
+		mechanic, err := c.orderModel.GetOrderMechanic(ctx, int(orderlist.MechanicID.Int64))
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Error().Err(fmt.Errorf("error when GetOrderMechanic: %w", err)).Send()
+				return nil, &handler.InternalServerError
+			}
+
+			orderListResponse = append(orderListResponse, OrderListResponse{
+				ID:              orderlist.ID,
+				UserID:          orderlist.UserID,
+				Description:     orderlist.Description.String,
+				MotorCycleBrand: orderlist.MotorCycleBrand,
+				Appointment:     appointment,
+				Location: OrderLocation{
+					AddressID: userLoc.ID,
+					Address:   userLoc.Address,
+					Label:     userLoc.Label,
+					Recipient: userLoc.RecipientName,
+					PhoneNum:  userLoc.PhoneNumber,
+				},
+				Mechanic:     Mechanic{},
+				Items:        orderItems,
+				TotalPrice:   orderlist.TotalPrice,
+				StatusOrder:  orderlist.OrderStatus.String,
+				StatusDetail: orderlist.OrderStatus.String,
+			})
+		} else {
+			orderListResponse = append(orderListResponse, OrderListResponse{
+				ID:              orderlist.ID,
+				UserID:          orderlist.UserID,
+				Description:     orderlist.Description.String,
+				MotorCycleBrand: orderlist.MotorCycleBrand,
+				Appointment:     appointment,
+				Location: OrderLocation{
+					AddressID: userLoc.ID,
+					Address:   userLoc.Address,
+					Label:     userLoc.Label,
+					Recipient: userLoc.RecipientName,
+					PhoneNum:  userLoc.PhoneNumber,
+				},
+				Mechanic: Mechanic{
+					Name:             mechanic.Name,
+					PhoneNumber:      mechanic.PhoneNumber,
+					CompletedService: mechanic.CompletedService,
+					Picture:          mechanic.Picture.String,
+				},
+				Items:        orderItems,
+				TotalPrice:   orderlist.TotalPrice,
+				StatusOrder:  orderlist.OrderStatus.String,
+				StatusDetail: orderlist.OrderStatus.String,
+			})
+		}
+	}
+
+	return orderListResponse, nil
 }
