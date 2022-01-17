@@ -132,13 +132,13 @@ func (req *ReviewBaseModel) ValidateReviewRequest() ([]handler.Fields, error) {
 }
 
 func (c *reviewCtx) AddServiceReview(ctx context.Context, userID string, form *ReviewBaseModel) error {
-	isAvailable, err := c.cartModel.IsServiceAvailable(ctx, form.ServiceID)
+	isServiceAvailable, err := c.cartModel.IsServiceAvailable(ctx, form.ServiceID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when checking isServiceAvailable : %w", err)).Send()
 		return err
 	}
 
-	if !isAvailable {
+	if !isServiceAvailable {
 		return &handler.ServiceNotExists
 	}
 

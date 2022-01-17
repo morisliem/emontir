@@ -20,7 +20,7 @@ type orderCtx struct {
 type Order interface {
 	PlaceOrder(ctx context.Context, userID, orderID string) (*PlcaeOrderResponse, error)
 	PaymentReceived(ctx context.Context, orderID string) error
-	ListOfOrders(ctx context.Context, userID string) ([]OrderListResponse, error)
+	ListOfOrders(ctx context.Context, userID string) (*OrderListResponse, error)
 }
 
 func NewOrder(orderModel model.Order, cartModel model.Cart, userModel model.User) Order {
@@ -72,7 +72,7 @@ type (
 		Picture          string `json:"picture"`
 	}
 
-	OrderListResponse struct {
+	OrderListData struct {
 		ID              string           `json:"id"`
 		UserID          string           `json:"user_id"`
 		Description     string           `json:"description"`
@@ -88,6 +88,10 @@ type (
 
 	PlcaeOrderResponse struct {
 		OrderID string `json:"order_id"`
+	}
+
+	OrderListResponse struct {
+		Data []OrderListData `json:"data"`
 	}
 )
 
@@ -153,8 +157,8 @@ func (c *orderCtx) PaymentReceived(ctx context.Context, orderID string) error {
 	return nil
 }
 
-func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) ([]OrderListResponse, error) {
-	orderListResponse := make([]OrderListResponse, 0)
+func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListResponse, error) {
+	orderListData := make([]OrderListData, 0)
 	orderLists, err := c.orderModel.ListOfOrders(ctx, userID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when getListOfOrders : %w", err)).Send()
@@ -203,7 +207,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) ([]OrderList
 				return nil, &handler.InternalServerError
 			}
 
-			orderListResponse = append(orderListResponse, OrderListResponse{
+			orderListData = append(orderListData, OrderListData{
 				ID:              orderlist.ID,
 				UserID:          orderlist.UserID,
 				Description:     orderlist.Description.String,
@@ -223,7 +227,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) ([]OrderList
 				StatusDetail: orderlist.OrderStatus.String,
 			})
 		} else {
-			orderListResponse = append(orderListResponse, OrderListResponse{
+			orderListData = append(orderListData, OrderListData{
 				ID:              orderlist.ID,
 				UserID:          orderlist.UserID,
 				Description:     orderlist.Description.String,
@@ -250,5 +254,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) ([]OrderList
 		}
 	}
 
-	return orderListResponse, nil
+	return &OrderListResponse{
+		Data: orderListData,
+	}, nil
 }
