@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"e-montir/api/handler"
-	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -130,7 +129,7 @@ var (
 	getOrderListField   = getOrderListField1 + getOrderListField2
 	getOrderListByIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "id" = $1`
 
-	getOrderListByUserID    = "getOrder"
+	getOrderListByUserID    = "getOrderByUserID"
 	getOrderListByUserIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "user_id" = $1`
 
 	getMechanic       = "getMechanic"
@@ -257,7 +256,6 @@ func (c *order) AssignMechanic(ctx context.Context, orderID string) error {
 
 func (c *order) CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel, error) {
 	var order OrderBaseModel
-	fmt.Println(orderID)
 	err := c.queries[getOrderListByID].GetContext(ctx, &order, orderID)
 	if err != nil {
 		if err == sql.ErrNoRows {
