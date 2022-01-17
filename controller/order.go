@@ -52,7 +52,7 @@ type (
 
 	OrderItem struct {
 		ServiceID int     `json:"id"`
-		Title     string  `json:"string"`
+		Title     string  `json:"title"`
 		Price     float64 `json:"price"`
 		Picture   string  `json:"picture"`
 	}
@@ -77,6 +77,7 @@ type (
 		UserID          string           `json:"user_id"`
 		Description     string           `json:"description"`
 		MotorCycleBrand string           `json:"motor_cycle_brand"`
+		CreatedAt       time.Time        `json:"created_at"`
 		Appointment     OrderAppointment `json:"appointment"`
 		Location        OrderLocation    `json:"location"`
 		Items           []OrderItem      `json:"items"`
@@ -220,6 +221,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 					Recipient: userLoc.RecipientName,
 					PhoneNum:  userLoc.PhoneNumber,
 				},
+				CreatedAt:    orderlist.CreatedAt,
 				Mechanic:     Mechanic{},
 				Items:        orderItems,
 				TotalPrice:   orderlist.TotalPrice,
@@ -246,6 +248,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 					CompletedService: mechanic.CompletedService,
 					Picture:          mechanic.Picture.String,
 				},
+				CreatedAt:    orderlist.CreatedAt,
 				Items:        orderItems,
 				TotalPrice:   orderlist.TotalPrice,
 				StatusOrder:  orderlist.OrderStatus.String,
