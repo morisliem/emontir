@@ -106,7 +106,7 @@ var (
 	removeOrderSQL = `DELETE FROM "orders" WHERE id = $1`
 
 	assignMechanic    = "assignMontirToOrder"
-	assignMechanicSQL = `UPDATE "orders" SET "mechanic_id" = $2, "status_order" = $3 WHERE "id" = $1`
+	assignMechanicSQL = `UPDATE "orders" SET "mechanic_id" = $2, "status_order" = $3, "status_detail" = $4 WHERE "id" = $1`
 
 	getMechanicIDs    = "getMechanic"
 	getMechanicIDsSQL = `SELECT "id" FROM "mechanics" ORDER BY "is_available" DESC`
@@ -130,7 +130,7 @@ var (
 	getOrderListByIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "id" = $1`
 
 	getOrderListByUserID    = "getOrderByUserID"
-	getOrderListByUserIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "user_id" = $1 ORDER BY "created_at"`
+	getOrderListByUserIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "user_id" = $1 ORDER BY "created_at" DESC`
 
 	getMechanic       = "getMechanic"
 	getMechanicFields = `"id", "name", "phone_number", "completed_service", "picture"`
@@ -149,6 +149,20 @@ var (
 		getOrderLocation:           getOrderLocationSQL,
 		getMechanic:                getMechanicSQL,
 		getOrderListByUserID:       getOrderListByUserIDSQL,
+	}
+
+	OrderDetail = map[int]string{
+		1: "Seller is preparing for your order",
+		2: "Montir is on the way to you",
+		3: "Montir is arrived at your place",
+		4: "Service done",
+	}
+
+	OrderStatus = map[int]string{
+		1: "Waiting for payment",
+		2: "On process",
+		3: "On the way",
+		4: "Done",
 	}
 )
 
@@ -190,7 +204,7 @@ func (c *order) SetOrder(ctx context.Context, userID string, param *OrderBaseMod
 	}
 
 	// nolint(gosec) // false positive
-	_, err = tx.ExecContext(ctx, setOrderSQL, param.ID, userID, param.UserAddressID, param.Date, param.TimeSlot, param.CreatedAt, param.TotalPrice, param.MotorCycleBrand, "waiting for payment")
+	_, err = tx.ExecContext(ctx, setOrderSQL, param.ID, userID, param.UserAddressID, param.Date, param.TimeSlot, param.CreatedAt, param.TotalPrice, param.MotorCycleBrand, OrderStatus[1])
 	if err != nil {
 		return err
 	}
@@ -237,7 +251,7 @@ func (c *order) AssignMechanic(ctx context.Context, orderID string) error {
 		return err
 	}
 
-	_, err = tx.ExecContext(ctx, assignMechanicSQL, orderID, mechanicID, "on process")
+	_, err = tx.ExecContext(ctx, assignMechanicSQL, orderID, mechanicID, OrderStatus[2], OrderDetail[1])
 	if err != nil {
 		return err
 	}
