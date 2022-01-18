@@ -1,0 +1,2 @@
+ALTER TABLE "orders" 
+    ADD COLUMN "invoice_id" VARCHAR(16) UNIQUE NOT NULL;

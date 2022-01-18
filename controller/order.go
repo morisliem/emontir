@@ -18,7 +18,7 @@ type orderCtx struct {
 }
 
 type Order interface {
-	PlaceOrder(ctx context.Context, userID, orderID string) (*PlcaeOrderResponse, error)
+	PlaceOrder(ctx context.Context, userID, orderID, invoiceID string) (*PlcaeOrderResponse, error)
 	PaymentReceived(ctx context.Context, orderID string) error
 	ListOfOrders(ctx context.Context, userID string) (*OrderListResponse, error)
 }
@@ -32,19 +32,6 @@ func NewOrder(orderModel model.Order, cartModel model.Cart, userModel model.User
 }
 
 type (
-	OrderResponse struct {
-		ID              string    `json:"id"`
-		UserID          string    `json:"user_id"`
-		UserAddressID   string    `json:"user_address_id"`
-		Description     string    `json:"description"`
-		TotalPrice      float64   `json:"total_price"`
-		CreatedAt       time.Time `json:"created_at"`
-		Status          string    `json:"status"` // waiting for payment, paid, completed
-		MotorCycleBrand string    `json:"motor_cycle_brand_name"`
-		TimeSlot        string    `json:"time_slot:"`
-		Date            string    `json:"date"`
-	}
-
 	OrderAppointment struct {
 		Date string `json:"date"`
 		Time string `json:"time"`
@@ -85,6 +72,7 @@ type (
 		TotalPrice      float64          `json:"total_price"`
 		StatusOrder     string           `json:"status_order"`
 		StatusDetail    string           `json:"status_detail"`
+		InvoiceID       string           `json:"invoice_id"`
 	}
 
 	PlcaeOrderResponse struct {
@@ -96,7 +84,7 @@ type (
 	}
 )
 
-func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*PlcaeOrderResponse, error) {
+func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID, invoiceID string) (*PlcaeOrderResponse, error) {
 	isCartAvailable, _, err := c.cartModel.IsCartAvailable(ctx, userID)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when checking IsCartAvailable: %w", err)).Send()
@@ -137,6 +125,7 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID string) (*Plc
 		MotorCycleBrand: res.Appointment.BrandName,
 		TotalPrice:      float64(totalPrice),
 		CreatedAt:       time.Now(),
+		InvoiceID:       invoiceID,
 	})
 
 	if err != nil {
@@ -227,6 +216,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 				TotalPrice:   orderlist.TotalPrice,
 				StatusOrder:  orderlist.OrderStatus.String,
 				StatusDetail: orderlist.OrderStatus.String,
+				InvoiceID:    orderlist.InvoiceID,
 			})
 		} else {
 			orderListData = append(orderListData, OrderListData{
@@ -253,6 +243,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 				TotalPrice:   orderlist.TotalPrice,
 				StatusOrder:  orderlist.OrderStatus.String,
 				StatusDetail: orderlist.OrderStatus.String,
+				InvoiceID:    orderlist.InvoiceID,
 			})
 		}
 	}

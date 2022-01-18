@@ -24,6 +24,7 @@ type (
 		TimeSlot        string         `db:"time_slot"`
 		Date            string         `db:"date"`
 		MechanicID      sql.NullInt64  `db:"mechanic_id"`
+		InvoiceID       string         `db:"invoice_id"`
 	}
 
 	OrderItem struct {
@@ -87,9 +88,9 @@ func NewOrder(db *sqlx.DB) Order {
 var (
 	setOrder        = "setOrder"
 	setOrderField1  = `("id", "user_id", "user_address_id", "date", "time_slot", "created_at", `
-	setOrderFields2 = `"total_price", "motor_cycle_brand_name", "status_order")`
+	setOrderFields2 = `"total_price", "motor_cycle_brand_name", "status_order", "invoice_id")`
 	setOrderFields  = setOrderField1 + setOrderFields2
-	setOrderSQL     = `INSERT INTO "orders" ` + setOrderFields + ` VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`
+	setOrderSQL     = `INSERT INTO "orders" ` + setOrderFields + ` VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`
 
 	getServiceIDSQL = `SELECT "service_id" FROM "cart_items" WHERE "cart_id" = $1`
 
@@ -125,7 +126,7 @@ var (
 
 	getOrderListByID    = "getOrder"
 	getOrderListField1  = `"id", "description", "total_price", "user_address_id", "created_at", "status_detail", `
-	getOrderListField2  = `"status_order", "user_id", "motor_cycle_brand_name", "time_slot", "date", "mechanic_id"`
+	getOrderListField2  = `"status_order", "user_id", "motor_cycle_brand_name", "time_slot", "date", "mechanic_id", "invoice_id"`
 	getOrderListField   = getOrderListField1 + getOrderListField2
 	getOrderListByIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "id" = $1`
 
@@ -204,7 +205,7 @@ func (c *order) SetOrder(ctx context.Context, userID string, param *OrderBaseMod
 	}
 
 	// nolint(gosec) // false positive
-	_, err = tx.ExecContext(ctx, setOrderSQL, param.ID, userID, param.UserAddressID, param.Date, param.TimeSlot, param.CreatedAt, param.TotalPrice, param.MotorCycleBrand, OrderStatus[1])
+	_, err = tx.ExecContext(ctx, setOrderSQL, param.ID, userID, param.UserAddressID, param.Date, param.TimeSlot, param.CreatedAt, param.TotalPrice, param.MotorCycleBrand, OrderStatus[1], param.InvoiceID)
 	if err != nil {
 		return err
 	}

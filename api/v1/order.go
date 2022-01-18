@@ -4,7 +4,10 @@ import (
 	"e-montir/api/handler"
 	"e-montir/controller"
 	"e-montir/pkg/uuid"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type OrderHandler struct {
@@ -25,7 +28,15 @@ func (c *OrderHandler) PlaceOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := c.orderController.PlaceOrder(r.Context(), userID, orderID)
+	rand.Seed(time.Now().UnixNano())
+	max := 100000000
+
+	randNum := rand.Intn(max)
+
+	invoice := strconv.Itoa(randNum)
+	invoice = "INV/" + invoice
+
+	res, err := c.orderController.PlaceOrder(r.Context(), userID, orderID, invoice)
 	if err != nil {
 		handler.ResponseError(w, err)
 		return
