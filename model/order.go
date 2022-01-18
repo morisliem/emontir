@@ -278,7 +278,7 @@ func (c *order) CheckOrder(ctx context.Context, orderID string) (*OrderBaseModel
 		return nil, err
 	}
 
-	if order.OrderStatus.String != "waiting for payment" {
+	if order.OrderStatus.String != OrderStatus[1] {
 		return nil, &handler.OrderHasBeenPaid
 	}
 
