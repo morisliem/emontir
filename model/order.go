@@ -130,7 +130,7 @@ var (
 	getOrderListByIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "id" = $1`
 
 	getOrderListByUserID    = "getOrderByUserID"
-	getOrderListByUserIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "user_id" = $1`
+	getOrderListByUserIDSQL = `SELECT ` + getOrderListField + `FROM "orders" WHERE "user_id" = $1 ORDER BY "created_at"`
 
 	getMechanic       = "getMechanic"
 	getMechanicFields = `"id", "name", "phone_number", "completed_service", "picture"`
