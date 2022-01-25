@@ -264,3 +264,26 @@ func ValidateSort(sort string) error {
 	}
 	return nil
 }
+
+func ValidateCategory(category string) error {
+	categoryVal := map[string]bool{
+		"kaburator":        true,
+		"rem":              true,
+		"monthly_services": true,
+		"oil":              true,
+		"lampu":            true,
+		"ban":              true,
+		"knalpot":          true,
+		"velg":             true,
+		"cleaning":         true,
+		"popular":          true,
+		"all":              true,
+	}
+
+	if len(category) > 0 {
+		if !categoryVal[category] {
+			return fmt.Errorf("invalid category")
+		}
+	}
+	return nil
+}

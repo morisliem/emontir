@@ -65,7 +65,7 @@ var (
 	getServicesSortHighestRatingWithType    = "AllServicesSortHighestRatingWithType"
 	getServicesSortHighestRatingWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
-										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
+										WHERE "rating" > $3 AND "category" LIKE '%'||$4||'%' 
 										ORDER BY "rating" DESC LIMIT $1 OFFSET $2`
 
 	getServicesSortHighestPriceNoType    = "AllServicesSortHighestPriceWithoutType"
@@ -77,7 +77,7 @@ var (
 	getServicesSortHighestPriceWithType    = "AllServicesSortHighestPriceWithType"
 	getServicesSortHighestPriceWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
-										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
+										WHERE "rating" > $3 AND "category" LIKE '%'||$4||'%' 
 										ORDER BY "price" DESC LIMIT $1 OFFSET $2`
 
 	getServicesSortLowestPriceNoType    = "AllServicesSortLowestPriceWithoutType"
@@ -89,7 +89,7 @@ var (
 	getServicesSortLowestPriceWithType    = "AllServicesSortLowestPriceWithType"
 	getServicesSortLowestPriceWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
-										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
+										WHERE "rating" > $3 AND "category" LIKE '%'||$4||'%' 
 										ORDER BY "price" LIMIT $1 OFFSET $2`
 
 	getServicesSortTitleDescNoType    = "AllServicesSortTitleDescWithoutType"
@@ -101,7 +101,7 @@ var (
 	getServicesSortTitleDescWithType    = "AllServicesSortTitleDescWithType"
 	getServicesSortTitleDescWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
-										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
+										WHERE "rating" > $3 AND "category" LIKE '%'||$4||'%' 
 										ORDER BY "title" DESC LIMIT $1 OFFSET $2`
 
 	getServicesSortTitleAscNoType    = "AllServicesSortTitleAscWithoutType"
@@ -113,7 +113,7 @@ var (
 	getServicesSortTitleAscWithType    = "AllServicesSortTitleAscWithType"
 	getServicesSortTitleAscWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
-										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
+										WHERE "rating" > $3 AND "category" LIKE '%'||$4||'%' 
 										ORDER BY "title" LIMIT $1 OFFSET $2`
 
 	// ================================================================== //
@@ -133,7 +133,7 @@ var (
 	searchServicesSortHighestRatingWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
 										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%'
-										AND "title" LIKE '%'||$5||'%'
+										AND "category" LIKE '%'||$5||'%'
 										ORDER BY "rating" DESC LIMIT $1 OFFSET $2`
 
 	searchServicesSortHighestPriceNoType    = "SearchAllServicesSortHighestPriceWithoutType"
@@ -146,7 +146,7 @@ var (
 	searchServicesSortHighestPriceWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
 										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
-										AND "title" LIKE '%'||$5||'%'
+										AND "category" LIKE '%'||$5||'%'
 										ORDER BY "price" DESC LIMIT $1 OFFSET $2`
 
 	searchServicesSortLowestPriceNoType    = "SearchAllServicesSortLowestPriceWithoutType"
@@ -159,7 +159,7 @@ var (
 	searchServicesSortLowestPriceWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
 										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
-										AND "title" LIKE '%'||$5||'%'
+										AND "category" LIKE '%'||$5||'%'
 										ORDER BY "price" LIMIT $1 OFFSET $2`
 
 	searchServicesSortTitleDescNoType    = "SearchAllServicesSortTitleDescWithoutType"
@@ -172,7 +172,7 @@ var (
 	searchServicesSortTitleDescWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
 										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
-										AND "title" LIKE '%'||$5||'%'
+										AND "category" LIKE '%'||$5||'%'
 										ORDER BY "title" DESC LIMIT $1 OFFSET $2`
 
 	searchServicesSortTitleAscNoType    = "SearchAllServicesSortTitleAscWithoutType"
@@ -185,7 +185,7 @@ var (
 	searchServicesSortTitleAscWithTypeSQL = `SELECT "id", "title", "description", "rating", 
 										"price", "picture" FROM "services" 
 										WHERE "rating" > $3 AND "title" LIKE '%'||$4||'%' 
-										AND "title" LIKE '%'||$5||'%'
+										AND "category" LIKE '%'||$5||'%'
 										ORDER BY "title" LIMIT $1 OFFSET $2`
 
 	serviceQueries = map[string]string{
@@ -249,7 +249,7 @@ var (
 // nolint
 func (c *service) GetAllServices(ctx context.Context, limit, offset int, condition SortNFilter) ([]ServiceBaseModel, error) {
 	var result []ServiceBaseModel
-	if condition.Type == "" {
+	if condition.Type == "all" {
 		// nolint
 		if err := c.db.SelectContext(ctx, &result, getServiceSortValNoType[condition.Sort], limit, offset, condition.Rating); err != nil {
 			return nil, err
@@ -266,7 +266,7 @@ func (c *service) GetAllServices(ctx context.Context, limit, offset int, conditi
 // nolint
 func (c *service) SearchService(ctx context.Context, limit, offset int, keyword string, condition SortNFilter) ([]ServiceBaseModel, error) {
 	var result []ServiceBaseModel
-	if condition.Type == "" {
+	if condition.Type == "all" {
 		// nolint
 		if err := c.db.SelectContext(ctx, &result, searchServiceSortValNoType[condition.Sort], limit, offset, condition.Rating, keyword); err != nil {
 			return nil, err

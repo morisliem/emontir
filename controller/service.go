@@ -69,7 +69,8 @@ type (
 	}
 )
 
-const defaultSort = "highest price"
+const defaultSort = "highest_rating"
+const defaultType = "all"
 
 // nolint
 func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, error) {
@@ -175,6 +176,19 @@ func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, e
 
 	if req.Sort == "" {
 		req.Sort = defaultSort
+	}
+
+	err = validator.ValidateCategory(req.Type)
+	if err != nil {
+		count++
+		fields = append(fields, handler.Fields{
+			Name:    "category",
+			Message: err.Error(),
+		})
+	}
+
+	if req.Type == "" {
+		req.Type = defaultType
 	}
 
 	if count == 0 {
@@ -298,6 +312,19 @@ func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, erro
 		req.Sort = defaultSort
 	}
 
+	err = validator.ValidateCategory(req.Type)
+	if err != nil {
+		count++
+		fields = append(fields, handler.Fields{
+			Name:    "type",
+			Message: err.Error(),
+		})
+	}
+
+	if req.Type == "" {
+		req.Type = defaultType
+	}
+
 	if count == 0 {
 		return nil, nil
 	}
@@ -308,7 +335,6 @@ func (c *serviceCtx) GetAllServices(ctx context.Context, condition *ServiceListR
 	result := make([]ServiceItem, 0)
 	offset := (condition.Page - 1) * condition.Limit
 	nextPageOffset := condition.Page * condition.Limit
-	fmt.Println("->", condition.Type, condition.Rating, condition.Sort)
 	res, err := c.serviceModel.GetAllServices(ctx, condition.Limit, offset, model.SortNFilter{
 		Type:   condition.Type,
 		Rating: condition.Rating,
