@@ -16,12 +16,11 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	_ = godotenv.Load(".env")
+	// _ = godotenv.Load(".env")
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -64,8 +63,8 @@ func main() {
 	}
 
 	httpServer := &http.Server{
-		// Addr: "0.0.0.0:" + port,
-		Addr:         os.Getenv("SERVER_ADDR"),
+		Addr: "0.0.0.0:" + port,
+		// Addr:         os.Getenv("SERVER_ADDR"),
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		Handler:      r,
