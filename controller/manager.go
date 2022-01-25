@@ -94,7 +94,7 @@ var (
 
 func (c *manager) Order() Order {
 	orderControllerOnce.Do(func() {
-		orderController = NewOrder(c.modelManager.Order(), c.modelManager.Cart(), c.modelManager.User())
+		orderController = NewOrder(c.modelManager.Order(), c.modelManager.Cart(), c.modelManager.User(), c.modelManager.Review())
 	})
 	return orderController
 }

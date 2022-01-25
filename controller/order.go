@@ -12,9 +12,10 @@ import (
 )
 
 type orderCtx struct {
-	orderModel model.Order
-	cartModel  model.Cart
-	userModel  model.User
+	orderModel  model.Order
+	cartModel   model.Cart
+	userModel   model.User
+	reviewModel model.Review
 }
 
 type Order interface {
@@ -23,11 +24,12 @@ type Order interface {
 	ListOfOrders(ctx context.Context, userID string) (*OrderListResponse, error)
 }
 
-func NewOrder(orderModel model.Order, cartModel model.Cart, userModel model.User) Order {
+func NewOrder(orderModel model.Order, cartModel model.Cart, userModel model.User, reviewModel model.Review) Order {
 	return &orderCtx{
-		orderModel: orderModel,
-		cartModel:  cartModel,
-		userModel:  userModel,
+		orderModel:  orderModel,
+		cartModel:   cartModel,
+		userModel:   userModel,
+		reviewModel: reviewModel,
 	}
 }
 
@@ -73,6 +75,7 @@ type (
 		StatusOrder     string           `json:"status_order"`
 		StatusDetail    string           `json:"status_detail"`
 		InvoiceID       string           `json:"invoice_id"`
+		IsReviewed      bool             `json:"is_reviewed"`
 	}
 
 	PlcaeOrderResponse struct {
@@ -150,6 +153,7 @@ func (c *orderCtx) PaymentReceived(ctx context.Context, orderID string) error {
 func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListResponse, error) {
 	orderListData := make([]OrderListData, 0)
 	orderLists, err := c.orderModel.ListOfOrders(ctx, userID)
+	isReviewed := false
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when getListOfOrders : %w", err)).Send()
 		return nil, err
@@ -190,6 +194,18 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 			Time: orderlist.TimeSlot,
 		}
 
+		_, err = c.reviewModel.GetReviewByOrderID(ctx, orderlist.ID)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Error().Err(fmt.Errorf("error when GetReviewByOrderID: %w", err)).Send()
+				return nil, &handler.InternalServerError
+			}
+		}
+
+		if err == nil {
+			isReviewed = true
+		}
+
 		mechanic, err := c.orderModel.GetOrderMechanic(ctx, int(orderlist.MechanicID.Int64))
 		if err != nil {
 			if err != sql.ErrNoRows {
@@ -217,6 +233,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 				StatusOrder:  orderlist.OrderStatus.String,
 				StatusDetail: orderlist.OrderStatus.String,
 				InvoiceID:    orderlist.InvoiceID,
+				IsReviewed:   isReviewed,
 			})
 		} else {
 			orderListData = append(orderListData, OrderListData{
@@ -244,6 +261,7 @@ func (c *orderCtx) ListOfOrders(ctx context.Context, userID string) (*OrderListR
 				StatusOrder:  orderlist.OrderStatus.String,
 				StatusDetail: orderlist.OrderStatus.String,
 				InvoiceID:    orderlist.InvoiceID,
+				IsReviewed:   isReviewed,
 			})
 		}
 	}

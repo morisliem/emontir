@@ -308,6 +308,7 @@ func (c *serviceCtx) GetAllServices(ctx context.Context, condition *ServiceListR
 	result := make([]ServiceItem, 0)
 	offset := (condition.Page - 1) * condition.Limit
 	nextPageOffset := condition.Page * condition.Limit
+	fmt.Println("->", condition.Type, condition.Rating, condition.Sort)
 	res, err := c.serviceModel.GetAllServices(ctx, condition.Limit, offset, model.SortNFilter{
 		Type:   condition.Type,
 		Rating: condition.Rating,
