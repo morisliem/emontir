@@ -174,6 +174,13 @@ func (c *authCtx) Register(ctx context.Context, form *RegisterRequest) (string, 
 		log.Error().Err(fmt.Errorf("error when RegisterUser: %w", err)).Send()
 		return "", &handler.InternalServerError
 	}
+
+	// err = c.userModel.SetEmailTimeLimit(req.Email, uid)
+	// if err != nil {
+	// 	log.Error().Err(fmt.Errorf("error when SetEmailActivationTimeLimit: %w", err)).Send()
+	// 	return "", err
+	// }
+
 	return uid, nil
 }
 
@@ -191,6 +198,15 @@ func (c *authCtx) ActivateEmail(ctx context.Context, email, id string) error {
 		log.Error().Msg("incorrect id")
 		return &handler.ActivationEmailFailedError
 	}
+
+	// err = c.userModel.IsEmailStillValid(email)
+	// if err != nil {
+	// 	log.Error().Err(fmt.Errorf("error when checking IsEmailActivationLinkStillValid: %w", err)).Send()
+	// 	if err == redis.Nil {
+	// 		return &handler.ActivationLinkExpired
+	// 	}
+	// 	return err
+	// }
 
 	err = c.userModel.ActivateEmail(ctx, email)
 	if err != nil {

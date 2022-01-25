@@ -64,8 +64,8 @@ func main() {
 	}
 
 	httpServer := &http.Server{
-		Addr: "0.0.0.0:" + port,
-		// Addr:         os.Getenv("SERVER_ADDR"),
+		// Addr: "0.0.0.0:" + port,
+		Addr:         os.Getenv("SERVER_ADDR"),
 		ReadTimeout:  readTimeout,
 		WriteTimeout: writeTimeout,
 		Handler:      r,

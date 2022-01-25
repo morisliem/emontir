@@ -17,8 +17,8 @@ type serviceCtx struct {
 }
 
 type Service interface {
-	GetAllServices(ctx context.Context, page, limit int) (ServiceListsResponse, error)
-	SearchService(ctx context.Context, page, limit int, keyword string) (ServiceListsResponse, error)
+	GetAllServices(ctx context.Context, condition *ServiceListRequest) (ServiceListsResponse, error)
+	SearchService(ctx context.Context, condition *SearchServiceRequest) (ServiceListsResponse, error)
 }
 
 func NewService(serviceModel model.Service) Service {
@@ -29,10 +29,14 @@ func NewService(serviceModel model.Service) Service {
 
 type (
 	ServiceListRequest struct {
-		Page        int
-		Limit       int
-		PageString  string
-		LimitString string
+		Page         int
+		Limit        int
+		PageString   string
+		LimitString  string
+		Type         string
+		Rating       float64
+		RatingString string
+		Sort         string
 	}
 
 	ServiceItem struct {
@@ -53,19 +57,27 @@ type (
 	}
 
 	SearchServiceRequest struct {
-		Page        int
-		Limit       int
-		PageString  string
-		LimitString string
-		Keyword     string
+		Page         int
+		Limit        int
+		PageString   string
+		LimitString  string
+		Keyword      string
+		Type         string
+		Rating       float64
+		RatingString string
+		Sort         string
 	}
 )
 
+const defaultSort = "highest price"
+
+// nolint
 func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, error) {
 	var count int
 	var fields []handler.Fields
 	pageValid := true
 	limitValid := true
+	ratingValid := true
 	err := validator.ValidatePage(req.PageString)
 	if err != nil {
 		pageValid = false
@@ -126,17 +138,58 @@ func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, e
 		req.Limit = limit
 	}
 
+	err = validator.ValidateFilterRating(req.RatingString)
+	if err != nil {
+		ratingValid = false
+		count++
+		fields = append(fields, handler.Fields{
+			Name:    "rating",
+			Message: err.Error(),
+		})
+	}
+
+	if ratingValid {
+		if req.RatingString == "" {
+			req.Rating = 0
+		} else {
+			rating, ratingErr := strconv.ParseFloat(req.RatingString, 64)
+			if ratingErr != nil {
+				count++
+				fields = append(fields, handler.Fields{
+					Name:    "rating",
+					Message: ratingErr.Error(),
+				})
+			}
+			req.Rating = rating
+		}
+	}
+
+	err = validator.ValidateSort(req.Sort)
+	if err != nil {
+		count++
+		fields = append(fields, handler.Fields{
+			Name:    "sort",
+			Message: err.Error(),
+		})
+	}
+
+	if req.Sort == "" {
+		req.Sort = defaultSort
+	}
+
 	if count == 0 {
 		return nil, nil
 	}
 	return fields, errors.New(handler.ValidationFailed)
 }
 
+// nolint
 func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, error) {
 	var count int
 	var fields []handler.Fields
 	pageValid := true
 	limitValid := true
+	ratingValid := true
 	err := validator.ValidatePage(req.PageString)
 	if err != nil {
 		pageValid = false
@@ -206,17 +259,60 @@ func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, erro
 		})
 	}
 
+	err = validator.ValidateFilterRating(req.RatingString)
+	if err != nil {
+		ratingValid = false
+		count++
+		fields = append(fields, handler.Fields{
+			Name:    "rating",
+			Message: err.Error(),
+		})
+	}
+
+	if ratingValid {
+		if req.RatingString == "" {
+			req.Rating = 0
+		} else {
+			rating, ratingErr := strconv.ParseFloat(req.RatingString, 64)
+			if ratingErr != nil {
+				count++
+				fields = append(fields, handler.Fields{
+					Name:    "rating",
+					Message: ratingErr.Error(),
+				})
+			}
+			req.Rating = rating
+		}
+	}
+
+	err = validator.ValidateSort(req.Sort)
+	if err != nil {
+		count++
+		fields = append(fields, handler.Fields{
+			Name:    "sort",
+			Message: err.Error(),
+		})
+	}
+
+	if req.Sort == "" {
+		req.Sort = defaultSort
+	}
+
 	if count == 0 {
 		return nil, nil
 	}
 	return fields, errors.New(handler.ValidationFailed)
 }
 
-func (c *serviceCtx) GetAllServices(ctx context.Context, page, limit int) (ServiceListsResponse, error) {
+func (c *serviceCtx) GetAllServices(ctx context.Context, condition *ServiceListRequest) (ServiceListsResponse, error) {
 	result := make([]ServiceItem, 0)
-	offset := (page - 1) * limit
-	nextPageOffset := page * limit
-	res, err := c.serviceModel.GetAllServices(ctx, limit, offset)
+	offset := (condition.Page - 1) * condition.Limit
+	nextPageOffset := condition.Page * condition.Limit
+	res, err := c.serviceModel.GetAllServices(ctx, condition.Limit, offset, model.SortNFilter{
+		Type:   condition.Type,
+		Rating: condition.Rating,
+		Sort:   condition.Sort,
+	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when GetAllServices: %w", err)).Send()
 		return ServiceListsResponse{}, &handler.InternalServerError
@@ -233,13 +329,17 @@ func (c *serviceCtx) GetAllServices(ctx context.Context, page, limit int) (Servi
 		result = append(result, tmp)
 	}
 
-	nextPageRes, err := c.serviceModel.GetAllServices(ctx, limit, nextPageOffset)
+	nextPageRes, err := c.serviceModel.GetAllServices(ctx, condition.Limit, nextPageOffset, model.SortNFilter{
+		Type:   condition.Type,
+		Rating: condition.Rating,
+		Sort:   condition.Sort,
+	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when GetAllServices: %w", err)).Send()
 		return ServiceListsResponse{}, &handler.InternalServerError
 	}
 
-	if len(res) <= limit && len(nextPageRes) == 0 {
+	if len(res) <= condition.Limit && len(nextPageRes) == 0 {
 		return ServiceListsResponse{
 			Services: result,
 			Pagination: Pagination{
@@ -250,16 +350,20 @@ func (c *serviceCtx) GetAllServices(ctx context.Context, page, limit int) (Servi
 	return ServiceListsResponse{
 		Services: result,
 		Pagination: Pagination{
-			NextPage: page + 1,
+			NextPage: condition.Page + 1,
 		},
 	}, nil
 }
 
-func (c *serviceCtx) SearchService(ctx context.Context, page, limit int, keyword string) (ServiceListsResponse, error) {
+func (c *serviceCtx) SearchService(ctx context.Context, condition *SearchServiceRequest) (ServiceListsResponse, error) {
 	result := make([]ServiceItem, 0)
-	offset := (page - 1) * limit
-	nextPageOffset := page * limit
-	res, err := c.serviceModel.SearchService(ctx, limit, offset, keyword)
+	offset := (condition.Page - 1) * condition.Limit
+	nextPageOffset := condition.Page * condition.Limit
+	res, err := c.serviceModel.SearchService(ctx, condition.Limit, offset, condition.Keyword, model.SortNFilter{
+		Type:   condition.Type,
+		Rating: condition.Rating,
+		Sort:   condition.Sort,
+	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when SearchService: %w", err)).Send()
 		return ServiceListsResponse{}, &handler.InternalServerError
@@ -277,13 +381,18 @@ func (c *serviceCtx) SearchService(ctx context.Context, page, limit int, keyword
 		result = append(result, tmp)
 	}
 
-	nextPageRes, err := c.serviceModel.SearchService(ctx, limit, nextPageOffset, keyword)
+	// nolint
+	nextPageRes, err := c.serviceModel.SearchService(ctx, condition.Limit, nextPageOffset, condition.Keyword, model.SortNFilter{
+		Type:   condition.Type,
+		Rating: condition.Rating,
+		Sort:   condition.Sort,
+	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when SearchService: %w", err)).Send()
 		return ServiceListsResponse{}, &handler.InternalServerError
 	}
 
-	if len(res) <= limit && len(nextPageRes) == 0 {
+	if len(res) <= condition.Limit && len(nextPageRes) == 0 {
 		return ServiceListsResponse{
 			Services: result,
 			Pagination: Pagination{
@@ -294,7 +403,7 @@ func (c *serviceCtx) SearchService(ctx context.Context, page, limit int, keyword
 	return ServiceListsResponse{
 		Services: result,
 		Pagination: Pagination{
-			NextPage: page + 1,
+			NextPage: condition.Page + 1,
 		},
 	}, nil
 }

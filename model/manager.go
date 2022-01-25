@@ -6,6 +6,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/go-redis/redis"
 	"github.com/jackc/pgx"
 	"github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -46,6 +47,31 @@ func NewSQLDB() *sqlx.DB {
 	return sqlx.NewDb(postgreDB, "postgres")
 }
 
+// func NewRedis() *redis.Client {
+// 	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+// 	if err != nil {
+// 		log.Fatal().Err(fmt.Errorf("error when convert redis_port: %w", err)).Send()
+// 	}
+
+// 	redisDB, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+// 	if err != nil {
+// 		log.Fatal().Err(fmt.Errorf("error when convert redis_db: %w", err)).Send()
+// 	}
+
+// 	client := redis.NewClient(&redis.Options{
+// 		Addr:     fmt.Sprintf("%s:%d", os.Getenv("REDIS_HOST"), redisPort),
+// 		Password: os.Getenv("REDIS_PASSWORD"),
+// 		DB:       redisDB,
+// 	})
+
+// 	_, err = client.Ping().Result()
+// 	if err != nil {
+// 		log.Fatal().Err(fmt.Errorf("error when pinging redis: %w", err)).Send()
+// 		return nil
+// 	}
+// 	return client
+// }
+
 type Manager interface {
 	User() User
 	Service() Service
@@ -57,11 +83,13 @@ type Manager interface {
 
 type manager struct {
 	SQLDB *sqlx.DB
+	Redis *redis.Client
 }
 
 func NewManager() Manager {
 	sm := &manager{
 		SQLDB: NewSQLDB(),
+		// Redis: NewRedis(),
 	}
 	return sm
 }

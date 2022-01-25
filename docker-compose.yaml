@@ -60,3 +60,10 @@ services:
       ]
     depends_on:
       - postgres
+  redis:
+    image: redis:6.2.6-alpine
+    restart: on-failure
+    expose:
+      - ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:6379/tcp

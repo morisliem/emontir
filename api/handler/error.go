@@ -9,6 +9,7 @@ var (
 	DuplicatedEmailError       = EmontirError{Code: "AUTH-400-01", Message: "email used"}
 	LoginFailedError           = EmontirError{Code: "AUTH-400-02", Message: "incorrect password" + "/" + "email"}
 	ActivationEmailFailedError = EmontirError{Code: "AUTH-400-03", Message: "activation email failed"}
+	ActivationLinkExpired      = EmontirError{Code: "AUTH-400-04", Message: "email activation link expired"}
 	UnauthorizedError          = EmontirError{Code: "AUTH-401-01", Message: "token invalid"}
 	EmailNotActivatedError     = EmontirError{Code: "AUTH-422-01", Message: "email not verified"}
 	ParsePayloadError          = EmontirError{Code: "SERVER-400-01", Message: "failed to parse payload"}

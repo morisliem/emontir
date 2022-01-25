@@ -53,16 +53,20 @@ type User interface {
 	GetUserCurrentLocation(ctx context.Context, userID string) (*UserLocation, error)
 	GetListOfUserLocation(ctx context.Context, userID string) ([]UserLocation, error)
 	AddUserLocation(ctx context.Context, userID string, param *UserLocation) error
+	// SetEmailTimeLimit(email, userID string) error
+	// IsEmailStillValid(email string) error
 }
 
 type user struct {
-	db      *sqlx.DB
+	db *sqlx.DB
+	// redis   *redis.Client
 	queries map[string]*sqlx.Stmt
 }
 
 func NewUser(db *sqlx.DB) User {
 	user := new(user)
 	user.db = db
+	// user.redis = redis
 	user.queries = make(map[string]*sqlx.Stmt, len(userQueries))
 	for k, v := range userQueries {
 		stmt, err := db.Preparex(v)
@@ -173,3 +177,19 @@ func (c *user) GetListOfUserLocation(ctx context.Context, userID string) ([]User
 	}
 	return result, nil
 }
+
+// func (c *user) SetEmailTimeLimit(email, userID string) error {
+// 	err := c.redis.Set(email, userID, time.Minute*1).Err()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+
+// func (c *user) IsEmailStillValid(email string) error {
+// 	_, err := c.redis.Get(email).Result()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }

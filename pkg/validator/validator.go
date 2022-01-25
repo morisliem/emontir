@@ -232,3 +232,35 @@ func ValidateFeedback(feedback string) error {
 	}
 	return nil
 }
+
+func ValidateFilterRating(rating string) error {
+	ratingVal := map[string]bool{
+		"4":   true,
+		"4.0": true,
+		"4.5": true,
+	}
+
+	if len(rating) > 0 {
+		if !ratingVal[rating] {
+			return fmt.Errorf("rating value must be 4.0 or 4.5")
+		}
+	}
+	return nil
+}
+
+func ValidateSort(sort string) error {
+	sortVal := map[string]bool{
+		"highest_rating": true,
+		"highest_price":  true,
+		"lowest_price":   true,
+		"name_a-z":       true,
+		"name_z-a":       true,
+	}
+
+	if len(sort) > 0 {
+		if !sortVal[sort] {
+			return fmt.Errorf("invalid sort command")
+		}
+	}
+	return nil
+}
