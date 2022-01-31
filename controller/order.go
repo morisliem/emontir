@@ -5,9 +5,7 @@ import (
 	"database/sql"
 	"e-montir/api/handler"
 	"e-montir/model"
-	"e-montir/pkg/fcm"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -155,27 +153,27 @@ func (c *orderCtx) PlaceOrder(ctx context.Context, userID, orderID, invoiceID st
 }
 
 func (c *orderCtx) PaymentReceived(ctx context.Context, orderID, transactionStatus string) error {
-	var notif fcm.NotifFcm
-	userID, err := c.userModel.GetUserIDByOrderID(ctx, orderID)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("error when GetUserIDByOrderID : %w", err)).Send()
-		return err
-	}
+	// var notif fcm.NotifFcm
+	// userID, err := c.userModel.GetUserIDByOrderID(ctx, orderID)
+	// if err != nil {
+	// 	log.Error().Err(fmt.Errorf("error when GetUserIDByOrderID : %w", err)).Send()
+	// 	return err
+	// }
 
-	fcmKey, err := c.userModel.GetFCMKey(ctx, userID)
-	if err != nil {
-		log.Error().Err(fmt.Errorf("error when GetFCMKey : %w", err)).Send()
-		return err
-	}
+	// fcmKey, err := c.userModel.GetFCMKey(ctx, userID)
+	// if err != nil {
+	// 	log.Error().Err(fmt.Errorf("error when GetFCMKey : %w", err)).Send()
+	// 	return err
+	// }
 
-	if transactionStatus != "PAID" {
-		notif.To = fcmKey
-		notif.Title = "payment failed"
-		notif.Body = "payment failed, please try again"
-		notif.Redirect = fmt.Sprintf("%s/orders/{%s}", os.Getenv("BASE_URL"), orderID)
-		fcm.SendNotification(ctx, notif)
-		return fmt.Errorf("payment failed")
-	}
+	// if transactionStatus != "PAID" {
+	// 	notif.To = fcmKey
+	// 	notif.Title = "payment failed"
+	// 	notif.Body = "payment failed, please try again"
+	// 	notif.Redirect = fmt.Sprintf("%s/orders/{%s}", os.Getenv("BASE_URL"), orderID)
+	// 	fcm.SendNotification(ctx, notif)
+	// 	return fmt.Errorf("payment failed")
+	// }
 
 	err := c.orderModel.UpdateOrderStatus(ctx, orderID, "On process", "")
 	if err != nil {
