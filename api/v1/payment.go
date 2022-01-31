@@ -52,6 +52,7 @@ func (c *PaymentHandler) PaymentNotification(w http.ResponseWriter, r *http.Requ
 	err := c.orderController.PaymentReceived(r.Context(), request.OrderID, request.TransactionStatus)
 	if err != nil {
 		handler.ResponseError(w, err)
+		return
 	}
 
 	handler.GenerateResponse(w, http.StatusOK, handler.DefaultSuccess{Success: true})
