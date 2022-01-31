@@ -53,6 +53,10 @@ type User interface {
 	GetUserCurrentLocation(ctx context.Context, userID string) (*UserLocation, error)
 	GetListOfUserLocation(ctx context.Context, userID string) ([]UserLocation, error)
 	AddUserLocation(ctx context.Context, userID string, param *UserLocation) error
+	StoreFCMKey(ctx context.Context, userID, fmc string) error
+	GetFCMKey(ctx context.Context, userID string) (string, error)
+	GetUserIDNOrderIDByInvoiceID(ctx context.Context, invoiceID string) (string, string, error)
+	GetUserIDByOrderID(ctx context.Context, orderID string) (string, error)
 	// SetEmailTimeLimit(email, userID string) error
 	// IsEmailStillValid(email string) error
 }
@@ -88,8 +92,20 @@ var (
 	userGetUserByEmail    = "GetUserByEmail"
 	userGetUserByEmailSQL = `SELECT "id", "is_active", "password" from "users" WHERE email = $1`
 
+	getUserIDByInvoiceID    = "getUserByInvoiceID"
+	getUserIDByInvoiceIDSQL = `SELECT "user_id", "id" from "orders" WHERE "invoice_id" = $1`
+
+	GetUserIDByOrderID    = "getUserByOrderID"
+	getUserIDByOrderIDSQL = `SELECT "user_id" from "orders" WHERE "id" = $1`
+
 	userIsEmailUsed    = "IsEmailUsed"
 	userIsEmailUsedSQL = `SELECT "email" FROM "users" WHERE email = $1`
+
+	setFCMKey    = "setFCMKey"
+	setFCMKeySQL = `UPDATE "users" SET "fcm_key" = $2 WHERE "id" = $1`
+
+	getFCMKey    = "getFCMKey"
+	getFCMKeySQL = `SELECT "fcm_key" FROM "users" WHERE "id" = $1`
 
 	getUserLocation          = "getUserLocation"
 	userLocField1            = `"id", "label", "address", "address_detail", `
@@ -106,12 +122,16 @@ var (
 	setUserLocationSQL    = `INSERT INTO "user_addresses" ` + setUserLocationFields + setUserLocValue
 
 	userQueries = map[string]string{
-		userSetNewUser:     userSetNewUserSQL,
-		userIsEmailUsed:    userIsEmailUsedSQL,
-		userActivateEmail:  userActivateEmailSQL,
-		userGetUserByEmail: userGetUserByEmailSQL,
-		getUserLocation:    getUserLocationSQL,
-		setUserLocation:    setUserLocationSQL,
+		userSetNewUser:       userSetNewUserSQL,
+		userIsEmailUsed:      userIsEmailUsedSQL,
+		userActivateEmail:    userActivateEmailSQL,
+		userGetUserByEmail:   userGetUserByEmailSQL,
+		getUserLocation:      getUserLocationSQL,
+		setUserLocation:      setUserLocationSQL,
+		setFCMKey:            setFCMKeySQL,
+		getFCMKey:            getFCMKeySQL,
+		getUserIDByInvoiceID: getUserIDByInvoiceIDSQL,
+		getReviewByOrderID:   getUserIDByOrderIDSQL,
 	}
 )
 
@@ -176,6 +196,41 @@ func (c *user) GetListOfUserLocation(ctx context.Context, userID string) ([]User
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *user) StoreFCMKey(ctx context.Context, userID, fcm string) error {
+	_, err := c.queries[setFCMKey].ExecContext(ctx, userID, fcm)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *user) GetFCMKey(ctx context.Context, userID string) (string, error) {
+	var fcmKey sql.NullString
+	err := c.queries[getFCMKey].QueryRowContext(ctx, userID).Scan(&fcmKey)
+	if err != nil {
+		return "", err
+	}
+	return fcmKey.String, nil
+}
+
+func (c *user) GetUserIDNOrderIDByInvoiceID(ctx context.Context, invoiceID string) (string, string, error) {
+	var userID, orderID sql.NullString
+	err := c.queries[getUserIDByInvoiceID].QueryRowContext(ctx, invoiceID).Scan(&userID, &orderID)
+	if err != nil {
+		return "", "", err
+	}
+	return userID.String, orderID.String, nil
+}
+
+func (c *user) GetUserIDByOrderID(ctx context.Context, orderID string) (string, error) {
+	var userID sql.NullString
+	err := c.queries[getUserIDByInvoiceID].QueryRowContext(ctx, orderID).Scan(&userID)
+	if err != nil {
+		return "", err
+	}
+	return userID.String, nil
 }
 
 // func (c *user) SetEmailTimeLimit(email, userID string) error {

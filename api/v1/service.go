@@ -5,6 +5,8 @@ import (
 	"e-montir/controller"
 	"net/http"
 	"strings"
+
+	"github.com/go-chi/chi"
 )
 
 type ServiceHandler struct {
@@ -62,6 +64,56 @@ func (c *ServiceHandler) SearchService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res, err := c.serviceController.SearchService(r.Context(), request)
+	if err != nil {
+		handler.ResponseError(w, err)
+		return
+	}
+	handler.GenerateResponse(w, http.StatusOK, res)
+}
+
+func (c *ServiceHandler) AddFavService(w http.ResponseWriter, r *http.Request) {
+	request := new(controller.AddOrRemoveService)
+	request.UserID = handler.GetTokenClaim(r.Context()).ID
+	request.ServiceIDString = chi.URLParam(r, "service_id")
+
+	fieldsErr, err := request.ValidateAddOrRemoveService()
+	if err != nil {
+		res := handler.DefaultUnprocessableEntityError(err.Error(), fieldsErr)
+		handler.GenerateResponse(w, http.StatusUnprocessableEntity, res)
+		return
+	}
+
+	err = c.serviceController.AddFavService(r.Context(), request.UserID, request.ServiceID)
+	if err != nil {
+		handler.ResponseError(w, err)
+		return
+	}
+	handler.GenerateResponse(w, http.StatusOK, handler.DefaultSuccess{Success: true})
+}
+
+func (c *ServiceHandler) RemoveFavService(w http.ResponseWriter, r *http.Request) {
+	request := new(controller.AddOrRemoveService)
+	request.UserID = handler.GetTokenClaim(r.Context()).ID
+	request.ServiceIDString = chi.URLParam(r, "service_id")
+
+	fieldsErr, err := request.ValidateAddOrRemoveService()
+	if err != nil {
+		res := handler.DefaultUnprocessableEntityError(err.Error(), fieldsErr)
+		handler.GenerateResponse(w, http.StatusUnprocessableEntity, res)
+		return
+	}
+
+	err = c.serviceController.RemoveFavService(r.Context(), request.UserID, request.ServiceID)
+	if err != nil {
+		handler.ResponseError(w, err)
+		return
+	}
+	handler.GenerateResponse(w, http.StatusOK, handler.DefaultSuccess{Success: true})
+}
+
+func (c *ServiceHandler) ListOfFavServices(w http.ResponseWriter, r *http.Request) {
+	userID := handler.GetTokenClaim(r.Context()).ID
+	res, err := c.serviceController.ListOfFavServices(r.Context(), userID)
 	if err != nil {
 		handler.ResponseError(w, err)
 		return

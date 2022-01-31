@@ -106,6 +106,9 @@ func createHandler(mailerCfg *mailer.Config) http.Handler {
 		apiRoute.With(middleware.ValidateToken()).Get("/services", h.Service.ListOfServices)
 		apiRoute.With(middleware.ValidateToken()).Get("/services/search", h.Service.SearchService)
 		apiRoute.With(middleware.ValidateToken()).Post("/services/{order_id}/{service_id}/review", h.Review.AddServiceReview)
+		apiRoute.With(middleware.ValidateToken()).Post("/services/{service_id}/favorite", h.Service.AddFavService)
+		apiRoute.With(middleware.ValidateToken()).Delete("/services/{service_id}/favorite", h.Service.RemoveFavService)
+		apiRoute.With(middleware.ValidateToken()).Get("/services/favorites", h.Service.ListOfFavServices)
 
 		apiRoute.With(middleware.ValidateToken()).Get("/timeslot", h.Timeslot.ListOfTimeslot)
 
@@ -122,7 +125,9 @@ func createHandler(mailerCfg *mailer.Config) http.Handler {
 		apiRoute.Post("/payment/notification", h.Payment.PaymentNotification)
 
 		apiRoute.With(middleware.ValidateToken()).Post("/order", h.Order.PlaceOrder)
+		apiRoute.Post("/order/status", h.Order.UpdateOrderStatus)
 		apiRoute.With(middleware.ValidateToken()).Get("/orders", h.Order.OrderLists)
+		apiRoute.With(middleware.ValidateToken()).Get("/orders/{order_id}", h.Order.OrderDetail)
 	})
 
 	return r

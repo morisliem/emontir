@@ -46,6 +46,7 @@ type (
 	LoginRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		FMCToken string `json:"fcm_key"`
 	}
 	LoginResponse struct {
 		Token     string `json:"token"`
@@ -249,6 +250,12 @@ func (c *authCtx) Login(ctx context.Context, form *LoginRequest) (*LoginResponse
 	token, expiredAt, err := jwt.GenerateToken(res.ID, os.Getenv("ACCESS_KEY"), keyDuration)
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when generateAccessToken: %w", err)).Send()
+		return nil, &handler.InternalServerError
+	}
+
+	err = c.userModel.StoreFCMKey(ctx, res.ID, form.FMCToken)
+	if err != nil {
+		log.Error().Err(fmt.Errorf("error when storingFCMKey: %w", err)).Send()
 		return nil, &handler.InternalServerError
 	}
 

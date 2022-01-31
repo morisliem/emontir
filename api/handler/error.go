@@ -18,9 +18,11 @@ var (
 	NoEmployeeError             = EmontirError{Code: "SERVER-400-03", Message: "no employee available"}
 	OrderHasBeenPaid            = EmontirError{Code: "SERVER-400-04", Message: "order has been paid"}
 	ServiceIsReviewed           = EmontirError{Code: "SERVER-400-05", Message: "service has been reviewed"}
+	ServiceIsAlreadyFav         = EmontirError{Code: "SERVER-400-06", Message: "service is already in the favorite list"}
 	ServiceNotExists            = EmontirError{Code: "SERVER-404-01", Message: "service not exists"}
 	CartAppointmentNotAvailable = EmontirError{Code: "SERVER-404-02", Message: "appointment not exists"}
 	OrderNotExists              = EmontirError{Code: "SERVER-404-03", Message: "cannot make payment to not exist order"}
+	FavServiceNotExists         = EmontirError{Code: "SERVER-404-04", Message: "favorite service not exists"}
 	InternalServerError         = EmontirError{Code: "SERVER-500-01", Message: "server error"}
 )
 
