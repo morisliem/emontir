@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "services" (
   "price" FLOAT NOT NULL,
   "picture" VARCHAR(128),
   PRIMARY KEY ("id")
-) WITHOUT OIDS;
+);
 
 CREATE INDEX IF NOT EXISTS "services_rating" ON "services" ("rating");
 CREATE INDEX IF NOT EXISTS "services_price" ON "services" ("price");

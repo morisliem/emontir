@@ -8,4 +8,4 @@ CREATE TABLE IF NOT EXISTS "carts"(
     PRIMARY KEY ("id"),
     CONSTRAINT "fk_user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE,
     CONSTRAINT "fk_user_address_id" FOREIGN KEY ("user_address_id") REFERENCES "user_addresses" ("id") ON DELETE CASCADE
-) WITHOUT OIDS;
+);

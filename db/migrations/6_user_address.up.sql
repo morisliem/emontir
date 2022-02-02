@@ -11,4 +11,4 @@ CREATE TABLE IF NOT EXISTS "user_addresses"(
     "created_at" TIMESTAMP NOT NULL,
     PRIMARY KEY("id"),
     CONSTRAINT "fk_user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-) WITHOUT OIDS;
+);

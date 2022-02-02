@@ -5,4 +5,4 @@ CREATE TABLE IF NOT EXISTS "order_items"(
     PRIMARY KEY("id"),
     CONSTRAINT "fk_order_id" FOREIGN KEY ("order_id") REFERENCES "orders" ("id"),
     CONSTRAINT "fk_service_id" FOREIGN KEY ("service_id") REFERENCES "services" ("id")
-)WITHOUT OIDS;
+);

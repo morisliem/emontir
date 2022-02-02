@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS "user_fav_services"(
     PRIMARY KEY("user_id", "service_id"),
     CONSTRAINT "fk_service_id" FOREIGN KEY ("service_id") REFERENCES "services" ("id") ON DELETE CASCADE,
     CONSTRAINT "fk_user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id")
-)WITHOUT OIDS;
+);

@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS "time_slots" (
   "employee_num" INT NOT NULL DEFAULT 10,
   "date" DATE NOT NULL,
   PRIMARY KEY ("id")
-) WITHOUT OIDS;
+);
 
 CREATE INDEX IF NOT EXISTS "time_slots_date" ON "time_slots" ("date");
 CREATE INDEX IF NOT EXISTS "time_slots_time" ON "time_slots" ("time");

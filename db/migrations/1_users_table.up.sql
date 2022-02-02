@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS "users" (
   "phone_num" VARCHAR(15),
   "is_active" BOOLEAN NOT NULL,
   PRIMARY KEY ("id")
-) WITHOUT OIDS;
+);

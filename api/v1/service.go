@@ -18,7 +18,6 @@ func NewServiceHandler(serviceController controller.Service) ServiceHandler {
 		serviceController: serviceController,
 	}
 }
-
 func (c *ServiceHandler) ListOfServices(w http.ResponseWriter, r *http.Request) {
 	request := new(controller.ServiceListRequest)
 	request.PageString = r.URL.Query().Get("page")
@@ -28,6 +27,7 @@ func (c *ServiceHandler) ListOfServices(w http.ResponseWriter, r *http.Request) 
 	request.RatingString = r.URL.Query().Get("rating")
 	request.Sort = r.URL.Query().Get("sort")
 	request.Sort = strings.ToLower(request.Sort)
+	userID := handler.GetTokenClaim(r.Context()).ID
 
 	fieldsErr, err := request.ValidateServiceListRequest()
 	if err != nil {
@@ -36,7 +36,7 @@ func (c *ServiceHandler) ListOfServices(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	res, err := c.serviceController.GetAllServices(r.Context(), request)
+	res, err := c.serviceController.GetAllServices(r.Context(), userID, request)
 	if err != nil {
 		handler.ResponseError(w, err)
 		return
@@ -56,7 +56,7 @@ func (c *ServiceHandler) SearchService(w http.ResponseWriter, r *http.Request) {
 	request.Sort = r.URL.Query().Get("sort")
 	request.Sort = strings.ToLower(request.Sort)
 
-	fieldsErr, err := request.ValidateSearchService()
+	fieldsErr, err := request.ValidateSearchServiceRequest()
 	if err != nil {
 		res := handler.DefaultUnprocessableEntityError(err.Error(), fieldsErr)
 		handler.GenerateResponse(w, http.StatusUnprocessableEntity, res)

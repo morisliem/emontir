@@ -10,4 +10,4 @@ CREATE TABLE IF NOT EXISTS "feedbacks"(
     CONSTRAINT uniq UNIQUE ("service_id","order_id"),
     CONSTRAINT "fk_service_id" FOREIGN KEY ("service_id") REFERENCES "services" ("id") ON DELETE CASCADE,
     CONSTRAINT "fk_order_id" FOREIGN KEY ("order_id") REFERENCES "orders" ("id")
-)WITHOUT OIDS;
+);

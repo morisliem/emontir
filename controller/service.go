@@ -5,10 +5,13 @@ import (
 	"database/sql"
 	"e-montir/api/handler"
 	"e-montir/model"
+	"e-montir/pkg/filter"
+	"e-montir/pkg/sort"
 	"e-montir/pkg/validator"
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 )
@@ -18,7 +21,7 @@ type serviceCtx struct {
 }
 
 type Service interface {
-	GetAllServices(ctx context.Context, condition *ServiceListRequest) (ServiceListsResponse, error)
+	GetAllServices(ctx context.Context, userID string, condition *ServiceListRequest) (ServiceListsResponse, error)
 	SearchService(ctx context.Context, condition *SearchServiceRequest) (ServiceListsResponse, error)
 	AddFavService(ctx context.Context, userID string, serviceID int) error
 	RemoveFavService(ctx context.Context, userID string, serviceID int) error
@@ -83,10 +86,10 @@ type (
 	}
 )
 
-const defaultSort = "highest_rating"
-const defaultType = "all"
+const defaultSort = sort.HighestRating
+const defaultType = filter.All
 
-// nolint
+// nolint:funlen:gocyclo // concise in 1 function
 func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, error) {
 	var count int
 	var fields []handler.Fields
@@ -164,8 +167,9 @@ func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, e
 	}
 
 	if ratingValid {
+		req.RatingString = strings.TrimSpace(req.RatingString)
 		if req.RatingString == "" {
-			req.Rating = 0
+			req.Rating = filter.RatingDefaultVal
 		} else {
 			rating, ratingErr := strconv.ParseFloat(req.RatingString, 64)
 			if ratingErr != nil {
@@ -188,6 +192,7 @@ func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, e
 		})
 	}
 
+	req.Sort = strings.TrimSpace(req.Sort)
 	if req.Sort == "" {
 		req.Sort = defaultSort
 	}
@@ -201,6 +206,7 @@ func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, e
 		})
 	}
 
+	req.Type = strings.TrimSpace(req.Type)
 	if req.Type == "" {
 		req.Type = defaultType
 	}
@@ -211,8 +217,8 @@ func (req *ServiceListRequest) ValidateServiceListRequest() ([]handler.Fields, e
 	return fields, errors.New(handler.ValidationFailed)
 }
 
-// nolint
-func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, error) {
+// nolint:funlen:gocyclo // concise in 1 function
+func (req *SearchServiceRequest) ValidateSearchServiceRequest() ([]handler.Fields, error) {
 	var count int
 	var fields []handler.Fields
 	pageValid := true
@@ -298,8 +304,9 @@ func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, erro
 	}
 
 	if ratingValid {
+		req.RatingString = strings.TrimSpace(req.RatingString)
 		if req.RatingString == "" {
-			req.Rating = 0
+			req.Rating = filter.RatingDefaultVal
 		} else {
 			rating, ratingErr := strconv.ParseFloat(req.RatingString, 64)
 			if ratingErr != nil {
@@ -322,6 +329,7 @@ func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, erro
 		})
 	}
 
+	req.Sort = strings.TrimSpace(req.Sort)
 	if req.Sort == "" {
 		req.Sort = defaultSort
 	}
@@ -335,6 +343,7 @@ func (req *SearchServiceRequest) ValidateSearchService() ([]handler.Fields, erro
 		})
 	}
 
+	req.Type = strings.TrimSpace(req.Type)
 	if req.Type == "" {
 		req.Type = defaultType
 	}
@@ -377,14 +386,44 @@ func (req *AddOrRemoveService) ValidateAddOrRemoveService() ([]handler.Fields, e
 	return fields, errors.New(handler.ValidationFailed)
 }
 
-func (c *serviceCtx) GetAllServices(ctx context.Context, condition *ServiceListRequest) (ServiceListsResponse, error) {
+// popular type will return service with number of order >= 30
+func (c *serviceCtx) GetAllServices(ctx context.Context, userID string, condition *ServiceListRequest) (ServiceListsResponse, error) {
 	result := make([]ServiceItem, 0)
 	offset := (condition.Page - 1) * condition.Limit
 	nextPageOffset := condition.Page * condition.Limit
-	res, err := c.serviceModel.GetAllServices(ctx, condition.Limit, offset, model.SortNFilter{
+
+	// userFavServices, err := c.serviceModel.ListOfFavServices(ctx, userID)
+	// if err != nil {
+	// 	if err != sql.ErrNoRows {
+	// 		log.Error().Err(fmt.Errorf("error when get listOfFavServices: %w", err)).Send()
+	// 		return ServiceListsResponse{}, &handler.InternalServerError
+	// 	}
+	// }
+
+	// if err == nil {
+	// 	for _, v := range userFavServices {
+	// 		service, err := c.serviceModel.GetServiceByID(ctx, v)
+	// 		if err != nil {
+	// 			log.Error().Err(fmt.Errorf("error when getting getServiceByID: %w", err)).Send()
+	// 			return ServiceListsResponse{}, &handler.InternalServerError
+	// 		}
+	// 		result = append(result, ServiceItem{
+	// 			ID:          service.ID,
+	// 			Title:       service.Title,
+	// 			Description: service.Description.String,
+	// 			Rating:      service.Rating,
+	// 			Price:       service.Price,
+	// 			Picture:     service.Picture.String,
+	// 		})
+	// 	}
+	// }
+
+	res, err := c.serviceModel.GetAllServices(ctx, userID, model.ListCriteria{
 		Type:   condition.Type,
 		Rating: condition.Rating,
 		Sort:   condition.Sort,
+		Offset: offset,
+		Limit:  condition.Limit,
 	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when GetAllServices: %w", err)).Send()
@@ -402,10 +441,12 @@ func (c *serviceCtx) GetAllServices(ctx context.Context, condition *ServiceListR
 		result = append(result, tmp)
 	}
 
-	nextPageRes, err := c.serviceModel.GetAllServices(ctx, condition.Limit, nextPageOffset, model.SortNFilter{
+	nextPageRes, err := c.serviceModel.GetAllServices(ctx, userID, model.ListCriteria{
 		Type:   condition.Type,
 		Rating: condition.Rating,
 		Sort:   condition.Sort,
+		Offset: nextPageOffset,
+		Limit:  condition.Limit,
 	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when GetAllServices: %w", err)).Send()
@@ -428,14 +469,18 @@ func (c *serviceCtx) GetAllServices(ctx context.Context, condition *ServiceListR
 	}, nil
 }
 
+// popular type will return service with number of order >= 30
 func (c *serviceCtx) SearchService(ctx context.Context, condition *SearchServiceRequest) (ServiceListsResponse, error) {
 	result := make([]ServiceItem, 0)
 	offset := (condition.Page - 1) * condition.Limit
 	nextPageOffset := condition.Page * condition.Limit
-	res, err := c.serviceModel.SearchService(ctx, condition.Limit, offset, condition.Keyword, model.SortNFilter{
-		Type:   condition.Type,
-		Rating: condition.Rating,
-		Sort:   condition.Sort,
+	res, err := c.serviceModel.SearchService(ctx, model.ListCriteria{
+		Type:    condition.Type,
+		Rating:  condition.Rating,
+		Sort:    condition.Sort,
+		Offset:  offset,
+		Limit:   condition.Limit,
+		Keyword: condition.Keyword,
 	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when SearchService: %w", err)).Send()
@@ -454,11 +499,13 @@ func (c *serviceCtx) SearchService(ctx context.Context, condition *SearchService
 		result = append(result, tmp)
 	}
 
-	// nolint
-	nextPageRes, err := c.serviceModel.SearchService(ctx, condition.Limit, nextPageOffset, condition.Keyword, model.SortNFilter{
-		Type:   condition.Type,
-		Rating: condition.Rating,
-		Sort:   condition.Sort,
+	nextPageRes, err := c.serviceModel.SearchService(ctx, model.ListCriteria{
+		Type:    condition.Type,
+		Rating:  condition.Rating,
+		Sort:    condition.Sort,
+		Offset:  nextPageOffset,
+		Limit:   condition.Limit,
+		Keyword: condition.Keyword,
 	})
 	if err != nil {
 		log.Error().Err(fmt.Errorf("error when SearchService: %w", err)).Send()
@@ -540,7 +587,6 @@ func (c *serviceCtx) RemoveFavService(ctx context.Context, userID string, servic
 	return nil
 }
 
-// should be combined with the list of services / search services endpoint
 func (c *serviceCtx) ListOfFavServices(ctx context.Context, userID string) (FavServiceListResponse, error) {
 	services := make([]ServiceItem, 0)
 	res, err := c.serviceModel.ListOfFavServices(ctx, userID)

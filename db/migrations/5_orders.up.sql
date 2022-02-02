@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "orders" (
   "date" DATE,
   PRIMARY KEY ("id"),
   CONSTRAINT "fk_user_id" FOREIGN KEY ("user_id") REFERENCES "users" ("id") ON DELETE CASCADE ON UPDATE CASCADE
-) WITHOUT OIDS;
+);
 
 CREATE INDEX IF NOT EXISTS "order_location" ON "orders" ("location");
 CREATE INDEX IF NOT EXISTS "order_date" ON "orders" ("date");

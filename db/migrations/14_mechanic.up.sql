@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "mechanics"(
     "completed_service" INT NOT NULL,
     "picture" VARCHAR(256),
     PRIMARY KEY("id")
-)WITHOUT OIDS;
+);
 
 INSERT INTO "mechanics" ("name", "phone_number", "is_available", "completed_service", "picture")
 VALUES
