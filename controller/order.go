@@ -166,14 +166,15 @@ func (c *orderCtx) PaymentReceived(ctx context.Context, orderID, transactionStat
 	// 	return err
 	// }
 
-	// if transactionStatus != "PAID" {
-	// 	notif.To = fcmKey
-	// 	notif.Title = "payment failed"
-	// 	notif.Body = "payment failed, please try again"
-	// 	notif.Redirect = fmt.Sprintf("%s/orders/{%s}", os.Getenv("BASE_URL"), orderID)
-	// 	fcm.SendNotification(ctx, notif)
-	// 	return fmt.Errorf("payment failed")
-	// }
+	if transactionStatus != "PAID" {
+		// notif.To = fcmKey
+		// notif.Title = "payment failed"
+		// notif.Body = "payment failed, please try again"
+		// notif.Redirect = fmt.Sprintf("%s/orders/{%s}", os.Getenv("BASE_URL"), orderID)
+		// fcm.SendNotification(ctx, notif)
+		// return fmt.Errorf("payment failed")
+		return fmt.Errorf("payment not received")
+	}
 
 	err := c.orderModel.UpdateOrderStatus(ctx, orderID, "On process", "")
 	if err != nil {
